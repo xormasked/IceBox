@@ -1,0 +1,202 @@
+#pragma once
+
+
+#include "../../Utils/memory.hpp"
+
+#include "../../Utils/definitions.hpp"
+#include "../../Maths/havok_math.hpp"
+
+#include "skeletons.h"
+
+namespace Scimitar {
+
+    class game_manager;
+    class Controller;
+
+    inline Controller* LocalPlayer = 0x0;
+
+    class Pawn;
+    class Entity;
+    class cskeleton;
+
+    using GetSkeletonComponentFn = cskeleton * ( __fastcall* )( unsigned __int8* a1, Entity* a2 );
+    using GetBoneFn = void( * )( cskeleton* a1, int a2, __m128* a3 );
+
+    inline GetSkeletonComponentFn get_skeleton_component = nullptr;
+    inline GetBoneFn get_bone_pos = nullptr;
+
+    inline auto get_camera_fx( )
+    {
+        uint64_t Base = Memory::ImageBase + 0x5D7D6F0;
+        std::vector<uintptr_t> Chain = { 0x300, 0xF90 };
+
+        return Memory::ReadPtr<uint64_t>( Base, Chain );
+    }
+
+    class view_translation {
+    public:
+        static view_translation* get( )
+        {
+            uint64_t camera = Memory::Read<uint64_t>( Memory::ImageBase + 0x5E32C50 );
+            camera = Memory::Read<uint64_t>( camera + 0x88 );
+            camera = Memory::Read<uint64_t>( camera + 0x0 );
+            camera = Memory::Read<uint64_t>( camera + 0x220 );
+            camera = Memory::Read<uint64_t>( camera + 0x410 );
+
+            return reinterpret_cast< view_translation* >( camera );
+        }
+
+        ubiVector3 get_view_right( )
+        {
+            return *reinterpret_cast< ubiVector3* >( this + 0x7A0 );
+        }
+
+        ubiVector3 get_view_up( )
+        {
+            return *reinterpret_cast< ubiVector3* >( this + 0x7B0 );
+        }
+
+        ubiVector3 get_view_forward( )
+        {
+            return *reinterpret_cast< ubiVector3* >( this + 0x7C0 );
+        }
+
+        float get_view_fovX( )
+        {
+            return *reinterpret_cast< float* >( this + 0x7E0 );
+        }
+
+        float get_view_fovY( )
+        {
+            return *reinterpret_cast< float* >( this + 0x7F4 );
+        }
+
+        ubiVector3 get_view_translation( )
+        {
+            return *reinterpret_cast< ubiVector3* >( this + 0x7D0 );
+        }
+    };
+
+    class round_state {
+    public:
+        static int get( ) {
+            uint64_t RoundBase = Memory::ImageBase + 0x070A5EE8;
+            std::vector<uintptr_t> RoundChain = { 0x300 };
+            int roundstate = Memory::ReadPtr<int>( RoundBase, RoundChain );
+            return roundstate;
+        }
+    };
+
+    class game_manager {
+    public:
+        static game_manager* get( ) {
+            return reinterpret_cast< game_manager* >( Memory::Read<uint64_t>( Memory::ImageBase + 0x5E019A8 ) );
+        }
+
+        Controller* controller_list_decrypt( )
+        {
+            uint64_t entityList = *( uint64_t* ) ( this + 0xB0 );
+            entityList += 0x0FFFFFFFFFFFFFFCA;
+            uint64_t entityList1 = entityList >> 0x11;
+            uint64_t entityList2 = entityList << 0x2F;
+            entityList = entityList1 | entityList2;
+            entityList += 0x0FFFFFFFFFFFFFFA8;
+
+            return reinterpret_cast< Controller* >( entityList );
+        }
+
+        int controller_size_decrypt( ) {
+            uint64_t entityCount = *( uint64_t* ) ( this + 0xB8 );
+            entityCount += 0x0FFFFFFFFFFFFFFCA;
+            uint64_t entityCount1 = entityCount >> 0x11;
+            uint64_t entityCount2 = entityCount << 0x2F;
+            entityCount = entityCount1 | entityCount2;
+            entityCount += 0x0FFFFFFFFFFFFFFA8;
+            int count = ( int ) ( entityCount ^ 0x18C0000000 );
+            return count;
+        }
+
+        Controller* get_local_controller( )
+        {
+            return Memory::call_virtual<Controller*>( this, 0x28 );
+        }
+    };
+
+    class Controller {
+    public:
+        Pawn* pawn_decrypt( )
+        {
+            return Memory::call_virtual<Pawn*>( this, 0x25 );
+        }
+
+        auto get_cam_component( )
+        {
+            return reinterpret_cast< uintptr_t* >( *( uint64_t* ) reinterpret_cast< uint64_t >( this + 0x90 ) + 0x67C );
+        }
+    };
+
+    class Pawn {
+    public:
+        Entity* entity_decrypt( ) {
+            return reinterpret_cast< Entity* >( *( uint64_t* ) ( this + 0x18 ) );
+        }
+
+        auto view_angles( ) -> ubiVector4 {
+            return *reinterpret_cast< ubiVector4* >( *reinterpret_cast< uint64_t* >( this + 0x1270 ) + 0xC0 );
+        }
+    };
+
+    class Entity {
+    public:
+        BYTE GetAlliance( )
+        {
+            if ( !this ) return 6;
+
+            uint64_t teamInfo = *( uint64_t* ) ( this + 0xD0 );
+            teamInfo = Memory::Read<uint64_t>( teamInfo + 0x98 );
+            teamInfo = __ROL8__( teamInfo, 0x26 );
+            teamInfo += 0x60A7E4A6C2B31A41;
+            teamInfo = __ROL8__( teamInfo, 0x38 );
+            BYTE team = Memory::Read<BYTE>( teamInfo + 0x30 );
+
+            return team;
+        }
+
+        ubiVector3 Origin( ) {
+            return *reinterpret_cast< ubiVector3* >( this + 0x50 );
+        }
+
+        cskeleton* get_skeleton( )
+        {
+            return get_skeleton_component( reinterpret_cast< unsigned __int8* >( this + 0x1CB ), this );
+        }
+    };
+
+    class GroundNavContext {
+    public:
+    };
+
+    class cskeleton {
+    public:
+        auto bone( BipedBoneID b ) -> havok::Vec4
+        {
+            havok::Vec4 ret = {};
+            if ( !Memory::valid_pointer( this ) || !get_bone_pos ) return ret;
+            __m128 output;
+
+            get_bone_pos( this, b, &output );
+
+            ret.x = output.m128_f32[ 0 ];
+            ret.y = output.m128_f32[ 1 ];
+            ret.z = output.m128_f32[ 2 ];
+            ret.w = output.m128_f32[ 3 ];
+            return ret;
+        }
+    };
+
+    inline void init( )
+    {
+        get_skeleton_component = reinterpret_cast< GetSkeletonComponentFn >( Memory::ImageBase + 0xD7E9D0 );
+        get_bone_pos = reinterpret_cast< GetBoneFn >( Memory::ImageBase + 0x631830 );
+    }
+}
