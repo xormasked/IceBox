@@ -10,6 +10,39 @@
 
 namespace Scimitar {
 
+    enum EDESrvComponents : uint32_t
+    {
+        EDrvAnimation = 0x2800E489,
+        EDrvSprinting = 0xDFD83971,
+        EDrvWeapon = 0xA6F78616,
+        EDrvMelee = 0xB1531297,
+        EDrvShooting = 0xCE425D1A,
+        EDrvDrone = 0x903F7852,
+        EDrvGadget = 0x799B767A,
+        EDrvLeaning = 0x2434CD8B,
+        EDrvVaulting = 0xF6D74D80,
+        EDrvContext = 0x5F2FB343,
+        EDrvNavigation = 0x529E3224,
+        EDrvInteraction = 0xBDF390BC,
+
+
+        ESrvR6AIData = 0x229E5633,
+        ESrvEffect = 0xB1059FBA,
+        ESrvMobility = 0x948CF73,
+        ESrvDebug = 0x646F16A3,
+        ESrvGroup = 0x650A15C1,
+        ESrvCoordinator = 0x9CFFF5DD,
+        ESrvScripting = 0x8ABC2229,
+        ESrvPerception = 0xCF133C7C,
+        ESrvLocation = 0x818666A4,
+        ESrvAbilities = 0x65EAE982,
+        ESrvHostage = 0xA0C9A8AB,
+
+        Unknown1 = 0xE7BB7DA4,
+        Unknown7 = 0xDBE19682,
+        Unknown10 = 0x8CB9FFB7
+    };
+
     class game_manager;
     class Controller;
 
@@ -25,10 +58,14 @@ namespace Scimitar {
     using GetSkeletonComponentFn = cskeleton * ( __fastcall* )( unsigned __int8* a1, Entity* a2 );
     using GetBoneFn = void( * )( cskeleton* a1, int a2, __m128* a3 );
     using CreateShotFn = __int64( __fastcall* )( __int64 Weapon_Infoa1, __m128* source, const __m128i* Direction );
+    using EDSrvListFn = uintptr_t( __fastcall* )( unsigned __int8* a1, Entity* a2 );
+    using ResolveComponentFn = uintptr_t( __fastcall* )( uintptr_t a1, unsigned int type_hash, int unk );
 
     inline GetSkeletonComponentFn get_skeleton_component = nullptr;
     inline GetBoneFn get_bone_pos = nullptr;
     inline CreateShotFn create_shot = nullptr;
+    inline EDSrvListFn ed_srv_list = nullptr;
+    inline ResolveComponentFn resolve_component_game = nullptr;
 
     inline auto get_camera_fx( )
     {
@@ -38,50 +75,20 @@ namespace Scimitar {
         return Memory::ReadPtr<uint64_t>( Base, Chain );
     }
 
-    // Same pattern as get_camera_fx: resolve ctx; vertical FOV radians at +0xBB8 (PFOV) / +0xBBC (WFOV).
-    inline auto get_camera_fov( )
+    inline uintptr_t get_camera_fov( )
     {
         uint64_t Base = Memory::ImageBase + 0x7EF0EB8;
         std::vector<uintptr_t> Chain = { 0x10 };
-
-        return Memory::ReadPtr<uint64_t>( Base, Chain );
+        const uint64_t ctx = Memory::ReadPtr<uint64_t>( Base, Chain );
+        return ctx ? static_cast< uintptr_t >( ctx ) + 0xBB8 : 0;
     }
 
-    namespace camera_fov_offsets {
-        inline constexpr uintptr_t pfov = 0xBB8;
-        inline constexpr uintptr_t wfov = 0xBBC;
-    }
-
-    inline float get_PFOV( )
+    inline uintptr_t get_viewmodel_fov( )
     {
-        const uint64_t ctx = get_camera_fov( );
-        if ( !ctx )
-            return 0.f;
-        return Memory::Read<float>( static_cast< uintptr_t >( ctx ) + camera_fov_offsets::pfov );
-    }
-
-    inline float get_WFOV( )
-    {
-        const uint64_t ctx = get_camera_fov( );
-        if ( !ctx )
-            return 0.f;
-        return Memory::Read<float>( static_cast< uintptr_t >( ctx ) + camera_fov_offsets::wfov );
-    }
-
-    inline void set_PFOV( float radians )
-    {
-        const uint64_t ctx = get_camera_fov( );
-        if ( !ctx )
-            return;
-        Memory::Write<float>( static_cast< uintptr_t >( ctx ) + camera_fov_offsets::pfov, radians );
-    }
-
-    inline void set_WFOV( float radians )
-    {
-        const uint64_t ctx = get_camera_fov( );
-        if ( !ctx )
-            return;
-        Memory::Write<float>( static_cast< uintptr_t >( ctx ) + camera_fov_offsets::wfov, radians );
+        uint64_t Base = Memory::ImageBase + 0x7EF0EB8;
+        std::vector<uintptr_t> Chain = { 0x10 };
+        const uint64_t ctx = Memory::ReadPtr<uint64_t>( Base, Chain );
+        return ctx ? static_cast< uintptr_t >( ctx ) + 0xBBC : 0;
     }
 
     class view_translation {
@@ -256,6 +263,19 @@ namespace Scimitar {
         {
             return get_skeleton_component( reinterpret_cast< unsigned __int8* >( this + 0x1CB ), this );
         }
+
+
+        uintptr_t resolve_component( uint64_t hash ) noexcept
+        {
+
+            const uintptr_t list = ed_srv_list( reinterpret_cast< unsigned __int8* >( reinterpret_cast< uintptr_t >( this ) + 0x1A9 ), this );
+
+            const uintptr_t list_header = Memory::Read< uintptr_t >( *reinterpret_cast< uintptr_t* >( list + 0x48 ) + 0x110 );
+
+            return Memory::Read< uintptr_t >( resolve_component_game( list_header, hash, 0 ) );
+
+        }
+
     };
 
     class GroundNavContext {
@@ -315,6 +335,8 @@ namespace Scimitar {
         get_skeleton_component = reinterpret_cast< GetSkeletonComponentFn >( Memory::ImageBase + 0xD7E9D0 );
         get_bone_pos = reinterpret_cast< GetBoneFn >( Memory::ImageBase + 0x631830 );
         create_shot = reinterpret_cast< CreateShotFn >( Memory::ImageBase + 0x1C4E7B0 );
+        ed_srv_list = reinterpret_cast< EDSrvListFn >( Memory::ImageBase + 0xD7EDF0 );
+        resolve_component_game = reinterpret_cast< ResolveComponentFn >( Memory::ImageBase + 0x181A810 );
     }
 }
 

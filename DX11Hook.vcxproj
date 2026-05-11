@@ -149,6 +149,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Core\Engine\engine.cpp" />
+    <ClCompile Include="ice\Features\rage_bot\rage_bot.cpp" />
+    <ClCompile Include="ice\Features\long_melee\long_melee.cpp" />
     <ClCompile Include="Resources\dllmain.cpp" />
     <ClCompile Include="Resources\External\ImGui\imgui.cpp" />
     <ClCompile Include="Resources\External\ImGui\imgui_demo.cpp" />
@@ -157,11 +159,14 @@
     <ClCompile Include="Resources\External\ImGui\imgui_impl_win32.cpp" />
     <ClCompile Include="Resources\External\ImGui\imgui_tables.cpp" />
     <ClCompile Include="Resources\External\ImGui\imgui_widgets.cpp" />
-    <ClCompile Include="ice\Features\camera_fx.cpp" />
+    <ClCompile Include="ice\Features\camera_fx\camera_fx.cpp" />
+    <ClCompile Include="ice\Features\aspect_ratio\aspect_ratio.cpp" />
     <ClCompile Include="Resources\Hook\directx\d3d11hook.cpp" />
+    <ClCompile Include="ice\Features\run_and_shoot\run_and_shoot.cpp" />
     <ClCompile Include="Resources\Hook\directx\Rendering\Render.cpp" />
     <ClCompile Include="Resources\Hook\directx\Rendering\UI\interface.cpp" />
     <MASM Include="ice\Features\aspect_ratio\aspect_ratio_stub.asm" Condition="'$(Platform)'=='x64'" />
+    <MASM Include="ice\Features\run_and_shoot\run_and_shoot_stub.asm" Condition="'$(Platform)'=='x64'" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\Crash Handler\crash_handler.hpp" />
@@ -179,9 +184,6 @@
     <ClInclude Include="Core\Utils\memory.hpp" />
     <ClInclude Include="Core\Utils\Haru Hook\mid_hook.hpp" />
     <ClInclude Include="Core\Utils\xorstr.hpp" />
-    <ClInclude Include="ice\Features\rage_bot.hpp" />
-    <ClInclude Include="ice\Features\camera_fx.hpp" />
-    <ClInclude Include="ice\Features\aspect_ratio\aspect_ratio.hpp" />
     <ClInclude Include="ice\Hooks\functions\rappel_constructor.hpp" />
     <ClInclude Include="ice\IceBox.hpp" />
     <ClInclude Include="ice\UbiHookBypass\UbiHook.hpp" />

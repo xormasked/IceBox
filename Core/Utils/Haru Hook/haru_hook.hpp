@@ -88,12 +88,12 @@ namespace HaruHook {
 
         const intptr_t base = static_cast< intptr_t >( reference_next_rip );
         for ( intptr_t d = step; d <= max_delta; d += step ) {
-            for ( intptr_t sign : { static_cast< intptr_t >( -1 ), intptr_t{ 1 } } ) {
-                const uintptr_t addr =
-                    static_cast< uintptr_t >( base + sign * d );
-                if ( void* const p = try_candidate( addr & ~align_mask ) )
-                    return p;
-            }
+            const uintptr_t below = static_cast< uintptr_t >( base - d );
+            if ( void* const p = try_candidate( below & ~align_mask ) )
+                return p;
+            const uintptr_t above = static_cast< uintptr_t >( base + d );
+            if ( void* const p = try_candidate( above & ~align_mask ) )
+                return p;
         }
         return nullptr;
     }

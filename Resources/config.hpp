@@ -9,6 +9,10 @@ namespace visuals {
     inline bool RageBotVisCheck = false;
     inline bool RageBotPenCheck = false;
 
+    inline bool LongMelee = false;
+
+    inline bool RunAndShoot = false;
+
     inline bool AspectRatioHook = false;
     inline float AspectRatio = 1.5f;
 

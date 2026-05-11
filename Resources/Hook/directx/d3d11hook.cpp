@@ -6,8 +6,7 @@
 #include "Rendering/Render.hpp"
 #include "../../../Core/Crash Handler/crash_handler.hpp"
 #include "../../../ice/Hooks/functions/rappel_constructor.hpp"
-#include "../../../ice/Features/aspect_ratio/aspect_ratio.hpp"
-#include "../../../ice/Features/camera_fx.hpp"
+#include "../../../ice/IceBox.hpp"
 #include "../../../Core/Utils/Haru Hook/haru_hook.hpp"
 #include "../../../Core/Utils/Haru Hook/mid_hook.hpp"
 #include "../../../Resources/config.hpp"
@@ -104,27 +103,42 @@ namespace d3d11 {
 
         ImGui_ImplDX11_NewFrame( );
         ImGui_ImplWin32_NewFrame( );
+
+        IceBox::rage_bot_run( visuals::RageBot );
+
         ImGui::NewFrame( );
 
 #ifdef _WIN64
         static bool s_aspect_toggle_last = false;
         if ( visuals::AspectRatioHook != s_aspect_toggle_last ) {
             if ( visuals::AspectRatioHook ) {
-                if ( !aspect_ratio::install( ) )
+                if ( !IceBox::aspect_ratio_install( ) )
                     visuals::AspectRatioHook = false;
             } else
-                aspect_ratio::uninstall( );
+                IceBox::aspect_ratio_uninstall( );
             s_aspect_toggle_last = visuals::AspectRatioHook;
         }
-        if ( visuals::AspectRatioHook && aspect_ratio::installed( ) )
+        if ( visuals::AspectRatioHook && IceBox::aspect_ratio_installed( ) )
             aspect_ratio_live = visuals::AspectRatio;
+
+        static bool s_run_shoot_last = false;
+        if ( visuals::RunAndShoot != s_run_shoot_last ) {
+            if ( visuals::RunAndShoot ) {
+                if ( !IceBox::run_and_shoot_install( ) )
+                    visuals::RunAndShoot = false;
+            } else
+                IceBox::run_and_shoot_uninstall( );
+            s_run_shoot_last = visuals::RunAndShoot;
+        }
 #endif
 
         Render::Renderables( );
 
         Render::user_interface( );
 
-        camera_fx::apply_fov( );
+        IceBox::camera_fx_apply_fov( );
+
+        IceBox::long_melee( visuals::LongMelee );
 
         ImGui::EndFrame( );
         ImGui::Render( );

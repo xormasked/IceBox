@@ -1,7 +1,10 @@
 #include "../interface.hpp"
 
 #include "../../../../config.hpp"
+#include "../../../../../Core/Engine/Anvil/scimitar.hpp"
 #include "../../d3d11hook.hpp"
+
+#include <cstdio>
 
 namespace Render {
 
@@ -38,12 +41,15 @@ namespace Render {
 
             if ( ImGui::BeginTabItem( "Misc" ) ) {
                 ImGui::Checkbox( "Ragebot", &visuals::RageBot );
+                ImGui::Checkbox( "Long melee", &visuals::LongMelee );
+                ImGui::Checkbox( "Run and shoot", &visuals::RunAndShoot );
                 if ( visuals::RageBot ) {
                     ImGui::Indent( );
                     ImGui::Checkbox( "Vischeck", &visuals::RageBotVisCheck );
                     ImGui::Checkbox( "Pencheck", &visuals::RageBotPenCheck );
                     ImGui::Unindent( );
                 }
+                ImGui::Separator( );
                 ImGui::EndTabItem( );
             }
 

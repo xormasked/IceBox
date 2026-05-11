@@ -2,7 +2,6 @@
 
 #include "../../../../Core/Engine/Anvil/scimitar.hpp"
 #include "../../../../Core/Engine/Anvil/Raycasting/RayCasting.hpp"
-#include "../../../../ice/features/rage_bot.hpp"
 #include "../../../../Resources/config.hpp"
 #include "../../../External/ImGui/imgui.h"
 
@@ -50,8 +49,6 @@ namespace Render {
         if ( !Scimitar::round_state::CurrentState( Scimitar::round_state::Prep ) &&
              !Scimitar::round_state::CurrentState( Scimitar::round_state::Action ) )
             return;
-
-        rage_bot::run( visuals::RageBot );
 
         auto* gameManager = Scimitar::game_manager::get( );
         if ( !gameManager ) return;
