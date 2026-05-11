@@ -95,9 +95,7 @@ namespace d3d11 {
         ImGui_ImplWin32_NewFrame( );
         ImGui::NewFrame( );
 
-        if ( Scimitar::round_state::get( ) == 2 || Scimitar::round_state::get( ) == 3 ) {
-            Render::Renderables( );
-        }
+        Render::Renderables( );
 
         Render::user_interface( );
 

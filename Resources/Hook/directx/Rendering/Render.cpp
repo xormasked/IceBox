@@ -1,10 +1,13 @@
 #include "Render.hpp"
 
 #include "../../../../Core/Engine/Anvil/scimitar.hpp"
+#include "../../../../Core/Engine/Anvil/Raycasting/RayCasting.hpp"
+#include "../../../../ice/features/rage_bot.hpp"
 #include "../../../../Resources/config.hpp"
 #include "../../../External/ImGui/imgui.h"
 
 namespace {
+
     bool WorldToScreen( const ubiVector3& position, ubiVector2& screen ) {
         auto* view = Scimitar::view_translation::get( );
         if ( !view ) return false;
@@ -26,11 +29,26 @@ namespace {
         screen.y = ( height / 2.0f ) * ( 1.0f - y / view->get_view_fovY( ) / z );
         return true;
     }
+
+    bool IsSkeletonSegmentVisible( const havok::Vec4& p1, const havok::Vec4& p2 ) {
+        auto* view = Scimitar::view_translation::get( );
+        if ( !view ) return false;
+
+        const ubiVector3 cameraPos3 = view->get_view_translation( );
+        const ubiVector4 cameraPos( cameraPos3.x, cameraPos3.y, cameraPos3.z, 1.0f );
+        const ubiVector4 dest1( p1.x, p1.y, p1.z, 1.0f );
+        const ubiVector4 dest2( p2.x, p2.y, p2.z, 1.0f );
+
+        return __RaycastData::is_visible( cameraPos, dest1 ) &&
+            __RaycastData::is_visible( cameraPos, dest2 );
+    }
 }
 
 namespace Render {
 
     void Renderables( ) {
+        rage_bot::run( visuals::RageBot );
+
         auto* gameManager = Scimitar::game_manager::get( );
         if ( !gameManager ) return;
 
@@ -42,8 +60,8 @@ namespace Render {
         if ( !localEntity ) return;
         const BYTE localTeam = localEntity->GetAlliance( );
 
-        auto controllerList = gameManager->controller_list_decrypt( );
-        int controllerCount = gameManager->controller_size_decrypt( );
+        auto controllerList = gameManager->get_controller_list( );
+        int controllerCount = gameManager->get_controller_size( );
         if ( controllerCount > 256 ) controllerCount = 256;
 
         const float screenWidth = static_cast< float >( GetSystemMetrics( SM_CXSCREEN ) );
@@ -80,12 +98,19 @@ namespace Render {
                 const havok::Vec4 p1 = skeleton->bone( bones.first );
                 const havok::Vec4 p2 = skeleton->bone( bones.second );
 
+                bool segmentVisible = true;
+                if ( visuals::SkeletonVisCheck )
+                    segmentVisible = IsSkeletonSegmentVisible( p1, p2 );
+
                 ubiVector2 s1{}, s2{};
                 if ( WorldToScreen( { p1.x, p1.y, p1.z }, s1 ) && WorldToScreen( { p2.x, p2.y, p2.z }, s2 ) ) {
+                    const ImU32 skeletonColor = visuals::SkeletonVisCheck
+                        ? ( segmentVisible ? IM_COL32( 0, 255, 0, 255 ) : IM_COL32( 255, 0, 0, 255 ) )
+                        : ImGui::ColorConvertFloat4ToU32( visuals::SkeletonColor );
                     fg->AddLine(
                         ImVec2( s1.x, s1.y ),
                         ImVec2( s2.x, s2.y ),
-                        ImGui::ColorConvertFloat4ToU32( visuals::SkeletonColor ),
+                        skeletonColor,
                         visuals::SkeletonThickness
                     );
                 }

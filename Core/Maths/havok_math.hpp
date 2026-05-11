@@ -22,6 +22,9 @@
 	__forceinline auto name( ) const noexcept -> type { if ( !this ) return {}; return *reinterpret_cast< type* >( reinterpret_cast< uintptr_t >( this ) + offset ); } \
 	__forceinline auto name( ) -> type&               { type crayon{}; if ( !this ) return crayon; return *reinterpret_cast< type* >( reinterpret_cast< uintptr_t >( this ) + offset ); }
 
+
+
+
 class ubiQuaternion {
 public:
     constexpr ubiQuaternion( float w = 1.f, float x = 0.f, float y = 0.f, float z = 0.f ) noexcept
@@ -165,6 +168,11 @@ public:
 
     constexpr bool operator==( const ubiVector3& other ) const noexcept {
         return x == other.x && y == other.y && z == other.z;
+    }
+
+    inline float Dot( const ubiVector3& vector )
+    {
+        return x * vector.x + y * vector.y + z * vector.z;
     }
 
     void Normalize( ) {
@@ -373,8 +381,9 @@ namespace havok {
             ( ( ( ( int ) ( r * 255.f ) & 0xFF ) << 16 ) ) |
             ( ( ( ( int ) ( a * 255.f ) & 0xFF ) << 24 ) );
     }
-}
 
+
+}
 
 
 #endif // !havok_math

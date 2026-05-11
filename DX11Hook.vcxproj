@@ -164,14 +164,18 @@
   <ItemGroup>
     <ClInclude Include="Core\Crash Handler\crash_handler.hpp" />
     <ClInclude Include="Core\Crash Handler\crash_handlerDLL.hpp" />
+    <ClInclude Include="Core\Engine\Anvil\PRender\W2S.hpp" />
+    <ClInclude Include="Core\Engine\Anvil\Raycasting\RayCasting.hpp" />
     <ClInclude Include="Core\Engine\Anvil\scimitar.hpp" />
     <ClInclude Include="Core\Engine\Anvil\skeletons.h" />
     <ClInclude Include="Core\Engine\engine.hpp" />
     <ClInclude Include="Core\Maths\crc_32.hpp" />
     <ClInclude Include="Core\Maths\havok_math.hpp" />
+    <ClInclude Include="Core\Maths\vectors.hpp" />
     <ClInclude Include="Core\Utils\definitions.hpp" />
     <ClInclude Include="Core\Utils\memory.hpp" />
     <ClInclude Include="Core\Utils\xorstr.hpp" />
+    <ClInclude Include="ice\Features\rage_bot.hpp" />
     <ClInclude Include="ice\Hooks\functions\rappel_constructor.hpp" />
     <ClInclude Include="ice\IceBox.hpp" />
     <ClInclude Include="ice\UbiHookBypass\UbiHook.hpp" />

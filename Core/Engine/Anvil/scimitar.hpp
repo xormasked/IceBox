@@ -18,12 +18,17 @@ namespace Scimitar {
     class Pawn;
     class Entity;
     class cskeleton;
+    class ecomponents;
+    class weaponcomponent;
+    class chealdweapon;
 
     using GetSkeletonComponentFn = cskeleton * ( __fastcall* )( unsigned __int8* a1, Entity* a2 );
     using GetBoneFn = void( * )( cskeleton* a1, int a2, __m128* a3 );
+    using CreateShotFn = __int64( __fastcall* )( __int64 Weapon_Infoa1, __m128* source, const __m128i* Direction );
 
     inline GetSkeletonComponentFn get_skeleton_component = nullptr;
     inline GetBoneFn get_bone_pos = nullptr;
+    inline CreateShotFn create_shot = nullptr;
 
     inline auto get_camera_fx( )
     {
@@ -93,8 +98,8 @@ namespace Scimitar {
             return reinterpret_cast< game_manager* >( Memory::Read<uint64_t>( Memory::ImageBase + 0x5E019A8 ) );
         }
 
-        Controller* controller_list_decrypt( )
-        {
+        auto get_controller_list( ) -> Controller* {
+
             uint64_t entityList = *( uint64_t* ) ( this + 0xB0 );
             entityList += 0x0FFFFFFFFFFFFFFCA;
             uint64_t entityList1 = entityList >> 0x11;
@@ -103,9 +108,11 @@ namespace Scimitar {
             entityList += 0x0FFFFFFFFFFFFFFA8;
 
             return reinterpret_cast< Controller* >( entityList );
+
         }
 
-        int controller_size_decrypt( ) {
+        int get_controller_size( ) {
+
             uint64_t entityCount = *( uint64_t* ) ( this + 0xB8 );
             entityCount += 0x0FFFFFFFFFFFFFFCA;
             uint64_t entityCount1 = entityCount >> 0x11;
@@ -114,6 +121,7 @@ namespace Scimitar {
             entityCount += 0x0FFFFFFFFFFFFFFA8;
             int count = ( int ) ( entityCount ^ 0x18C0000000 );
             return count;
+
         }
 
         Controller* get_local_controller( )
@@ -129,10 +137,26 @@ namespace Scimitar {
             return Memory::call_virtual<Pawn*>( this, 0x25 );
         }
 
+
         auto get_cam_component( )
         {
             return reinterpret_cast< uintptr_t* >( *( uint64_t* ) reinterpret_cast< uint64_t >( this + 0x90 ) + 0x67C );
         }
+
+
+        auto get_current_weapon( ) -> chealdweapon*
+        {
+            if ( !this || !Memory::valid_pointer( this ) ) return 0;
+
+            uint64_t weaponInfo = *( uint64_t* ) ( this + 0x90 );
+            weaponInfo = Memory::Read<uint64_t>( weaponInfo + 0x70 );
+            weaponInfo = Memory::Read<uint64_t>( weaponInfo + 0x288 );
+            weaponInfo -= 0x34;
+            weaponInfo ^= 0x4F;
+            weaponInfo -= 0x76;
+            return (chealdweapon*) weaponInfo;
+        }
+
     };
 
     class Pawn {
@@ -161,6 +185,7 @@ namespace Scimitar {
 
             return team;
         }
+
 
         ubiVector3 Origin( ) {
             return *reinterpret_cast< ubiVector3* >( this + 0x50 );
@@ -194,9 +219,41 @@ namespace Scimitar {
         }
     };
 
+
+
+    class chealdweapon {
+    public:
+
+        void create_bullet( ubiVector4 src, ubiVector4 dst )
+        {
+            if ( !this ) return;
+
+            ubiVector4 difference = src - dst;
+            float hypothenuse = sqrtf( difference.x * difference.x + difference.y * difference.y + difference.z * difference.z );
+            if ( hypothenuse < 0.0001f ) return;
+
+            float inv_hypothenuse = 1.0f / hypothenuse;
+            ubiVector4 result( difference.x * inv_hypothenuse, difference.y * inv_hypothenuse, difference.z * inv_hypothenuse, 0.0f );
+            ubiVector4 direction( -result.x, -result.y, -result.z, 0.0f );
+
+
+            __m128 source128 = _mm_setr_ps( src.x, src.y, src.z, src.w );
+            __m128 direction128 = _mm_setr_ps( direction.x, direction.y, direction.z, direction.w );
+
+            create_shot
+            (
+                reinterpret_cast< __int64 >( this ),
+                &source128,
+                reinterpret_cast< const __m128i* >( &direction128 )
+            );
+        }
+    };
+
     inline void init( )
     {
         get_skeleton_component = reinterpret_cast< GetSkeletonComponentFn >( Memory::ImageBase + 0xD7E9D0 );
         get_bone_pos = reinterpret_cast< GetBoneFn >( Memory::ImageBase + 0x631830 );
+        create_shot = reinterpret_cast< CreateShotFn >( Memory::ImageBase + 0x1C4E7B0 );
     }
 }
+
