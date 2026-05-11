@@ -160,6 +160,7 @@
     <ClCompile Include="Resources\Hook\directx\d3d11hook.cpp" />
     <ClCompile Include="Resources\Hook\directx\Rendering\Render.cpp" />
     <ClCompile Include="Resources\Hook\directx\Rendering\UI\interface.cpp" />
+    <MASM Include="ice\Features\aspect_ratio\aspect_ratio_stub.asm" Condition="'$(Platform)'=='x64'" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\Crash Handler\crash_handler.hpp" />
@@ -173,9 +174,12 @@
     <ClInclude Include="Core\Maths\havok_math.hpp" />
     <ClInclude Include="Core\Maths\vectors.hpp" />
     <ClInclude Include="Core\Utils\definitions.hpp" />
+    <ClInclude Include="Core\Utils\Haru Hook\haru_hook.hpp" />
     <ClInclude Include="Core\Utils\memory.hpp" />
+    <ClInclude Include="Core\Utils\Haru Hook\mid_hook.hpp" />
     <ClInclude Include="Core\Utils\xorstr.hpp" />
     <ClInclude Include="ice\Features\rage_bot.hpp" />
+    <ClInclude Include="ice\Features\aspect_ratio\aspect_ratio.hpp" />
     <ClInclude Include="ice\Hooks\functions\rappel_constructor.hpp" />
     <ClInclude Include="ice\IceBox.hpp" />
     <ClInclude Include="ice\UbiHookBypass\UbiHook.hpp" />

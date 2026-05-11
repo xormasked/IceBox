@@ -33,6 +33,8 @@ namespace Render {
             }
 
             if ( ImGui::BeginTabItem( "Misc" ) ) {
+                ImGui::Checkbox( "Aspect ratio", &visuals::AspectRatioHook );
+                ImGui::SliderFloat( "Aspect ratio", &visuals::AspectRatio, 0.1f, 2.0f, "%.2f" );
                 ImGui::Checkbox( "Visible-Bone Ragebot", &visuals::RageBot );
                 if ( ImGui::Button( "Print cHealdWeapon Address", ImVec2( 220, 30 ) ) ) {
 

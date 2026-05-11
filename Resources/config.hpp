@@ -7,6 +7,9 @@
 namespace visuals {
     inline bool RageBot = false;
 
+    inline bool AspectRatioHook = false;
+    inline float AspectRatio = 1.5f;
+
     inline bool Tracers = true;
     inline ImVec4 TracerColor = { 1.f, 1.f, 1.f, 1.f };
     inline const char* TracerPos[] = { "Bottom-Middle", "Center", "Top-Middle" };

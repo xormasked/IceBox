@@ -84,11 +84,26 @@ namespace Scimitar {
 
     class round_state {
     public:
-        static int get( ) {
+        static int get( )
+        {
             uint64_t RoundBase = Memory::ImageBase + 0x070A5EE8;
             std::vector<uintptr_t> RoundChain = { 0x300 };
             int roundstate = Memory::ReadPtr<int>( RoundBase, RoundChain );
             return roundstate;
+        }
+
+        enum RoundState : int
+        {
+            Loading = 1, // Loading screen
+            Prep = 2, // Prep Phase
+            Action = 3, // In Round
+            End = 4, // End Screen
+            Menu = 5 // Menu
+        };
+
+        static bool CurrentState( RoundState round )
+        {
+            return round_state::get( ) == ( int ) round;
         }
     };
 

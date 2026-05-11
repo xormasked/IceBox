@@ -590,9 +590,13 @@ bool ImGui::ButtonBehavior(const ImRect& bb, ImGuiID id, bool* out_hovered, bool
 
             // 'Repeat' mode acts when held regardless of _PressedOn flags (see table above).
             // Relies on repeat logic of IsMouseClicked() but we may as well do it ourselves if we end up exposing finer RepeatDelay/RepeatRate settings.
-            if (g.ActiveId == id && (flags & ImGuiButtonFlags_Repeat))
-                if (g.IO.MouseDownDuration[g.ActiveIdMouseButton] > 0.0f && IsMouseClicked(g.ActiveIdMouseButton, true))
+            if (g.ActiveId == id && (flags & ImGuiButtonFlags_Repeat)) {
+                int repeat_mb = g.ActiveIdMouseButton;
+                if (repeat_mb < 0 || repeat_mb >= ImGuiMouseButton_COUNT)
+                    repeat_mb = ImGuiMouseButton_Left;
+                if (g.IO.MouseDownDuration[repeat_mb] > 0.0f && IsMouseClicked(repeat_mb, true))
                     pressed = true;
+            }
         }
 
         if (pressed)
@@ -628,8 +632,9 @@ bool ImGui::ButtonBehavior(const ImRect& bb, ImGuiID id, bool* out_hovered, bool
             if (g.ActiveIdIsJustActivated)
                 g.ActiveIdClickOffset = g.IO.MousePos - bb.Min;
 
-            const int mouse_button = g.ActiveIdMouseButton;
-            IM_ASSERT(mouse_button >= 0 && mouse_button < ImGuiMouseButton_COUNT);
+            int mouse_button = g.ActiveIdMouseButton;
+            if (mouse_button < 0 || mouse_button >= ImGuiMouseButton_COUNT)
+                mouse_button = ImGuiMouseButton_Left;
             if (g.IO.MouseDown[mouse_button])
             {
                 held = true;

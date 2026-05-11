@@ -47,6 +47,10 @@ namespace {
 namespace Render {
 
     void Renderables( ) {
+        if ( !Scimitar::round_state::CurrentState( Scimitar::round_state::Prep ) &&
+             !Scimitar::round_state::CurrentState( Scimitar::round_state::Action ) )
+            return;
+
         rage_bot::run( visuals::RageBot );
 
         auto* gameManager = Scimitar::game_manager::get( );

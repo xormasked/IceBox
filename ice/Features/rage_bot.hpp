@@ -39,6 +39,9 @@ namespace rage_bot {
     inline void run( bool enable )
     {
         if ( !enable ) return;
+        if ( !Scimitar::round_state::CurrentState( Scimitar::round_state::Prep ) &&
+             !Scimitar::round_state::CurrentState( Scimitar::round_state::Action ) )
+            return;
 
         auto* game_manager = Scimitar::game_manager::get( );
 

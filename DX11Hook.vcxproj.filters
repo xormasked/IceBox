@@ -83,6 +83,9 @@
     <ClInclude Include="Core\Utils\memory.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Utils\Haru Hook\haru_hook.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="ice\Hooks\functions\rappel_constructor.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

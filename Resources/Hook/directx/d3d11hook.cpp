@@ -6,6 +6,16 @@
 #include "Rendering/Render.hpp"
 #include "../../../Core/Crash Handler/crash_handler.hpp"
 #include "../../../ice/Hooks/functions/rappel_constructor.hpp"
+#include "../../../ice/Features/aspect_ratio/aspect_ratio.hpp"
+#include "../../../Core/Utils/Haru Hook/haru_hook.hpp"
+#include "../../../Core/Utils/Haru Hook/mid_hook.hpp"
+#include "../../../Resources/config.hpp"
+
+#include <iostream>
+
+#ifdef _WIN64
+extern "C" float aspect_ratio_live;
+#endif
 
 typedef long( __stdcall* present_t )( IDXGISwapChain*, UINT, UINT );
 present_t p_present = nullptr;
@@ -95,6 +105,20 @@ namespace d3d11 {
         ImGui_ImplWin32_NewFrame( );
         ImGui::NewFrame( );
 
+#ifdef _WIN64
+        static bool s_aspect_toggle_last = false;
+        if ( visuals::AspectRatioHook != s_aspect_toggle_last ) {
+            if ( visuals::AspectRatioHook ) {
+                if ( !aspect_ratio::install( ) )
+                    visuals::AspectRatioHook = false;
+            } else
+                aspect_ratio::uninstall( );
+            s_aspect_toggle_last = visuals::AspectRatioHook;
+        }
+        if ( visuals::AspectRatioHook && aspect_ratio::installed( ) )
+            aspect_ratio_live = visuals::AspectRatio;
+#endif
+
         Render::Renderables( );
 
         Render::user_interface( );
@@ -115,7 +139,18 @@ namespace d3d11 {
 
     auto __stdcall main( ) -> int
     {
+        const auto release_hooks_and_cave = []( ) {
+            mid_hook::uninstall_all( );
+            HaruHook::release_injection_cave( );
+        };
+
         Engine::Get( )->SetupConsole( );
+
+        constexpr size_t kInjectionCodeCaveBytes = 4096;
+        HaruHook::injection_code_cave = HaruHook::allocate_code_cave( kInjectionCodeCaveBytes );
+        HaruHook::injection_code_cave_bytes = HaruHook::injection_code_cave ? kInjectionCodeCaveBytes : 0;
+        if ( !HaruHook::injection_code_cave )
+            std::cout << "[Haru Hook] injection code cave allocation FAILED\n";
 
         CrashCatch::Config crash_config;
         crash_config.dumpFolder = "./crash_dumps/";
@@ -138,11 +173,26 @@ namespace d3d11 {
 
         Scimitar::init( );
 
-        if ( !get_present_pointer( ) ) return 1;
-        if ( !init_hooks( ) ) return 1;
-        if ( !rappel_hook::install( ) ) return 1;
-        if ( MH_CreateHook( reinterpret_cast< void** >( p_present_target ), &detour_present, reinterpret_cast< void** >( &p_present ) ) != MH_OK ) return 1;
-        if ( MH_EnableHook( p_present_target ) != MH_OK ) return 1;
+        if ( !get_present_pointer( ) ) {
+            release_hooks_and_cave( );
+            return 1;
+        }
+        if ( !init_hooks( ) ) {
+            release_hooks_and_cave( );
+            return 1;
+        }
+        if ( !rappel_hook::install( ) ) {
+            release_hooks_and_cave( );
+            return 1;
+        }
+        if ( MH_CreateHook( reinterpret_cast< void** >( p_present_target ), &detour_present, reinterpret_cast< void** >( &p_present ) ) != MH_OK ) {
+            release_hooks_and_cave( );
+            return 1;
+        }
+        if ( MH_EnableHook( p_present_target ) != MH_OK ) {
+            release_hooks_and_cave( );
+            return 1;
+        }
 
         while ( true ) {
             Sleep( 10 );
@@ -153,6 +203,7 @@ namespace d3d11 {
         }
 
         g_shutting_down = true;
+        release_hooks_and_cave( );
         unhook( );
         MH_DisableHook( MH_ALL_HOOKS );
         Sleep( 500 );

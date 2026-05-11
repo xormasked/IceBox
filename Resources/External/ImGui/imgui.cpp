@@ -3624,6 +3624,7 @@ void ImGui::StartMouseMovingWindow(ImGuiWindow* window)
     ImGuiContext& g = *GImGui;
     FocusWindow(window);
     SetActiveID(window->MoveId, window);
+    g.ActiveIdMouseButton = ImGuiMouseButton_Left;
     g.NavDisableHighlight = true;
     g.ActiveIdClickOffset = g.IO.MouseClickedPos[0] - window->RootWindow->Pos;
     g.ActiveIdNoClearOnFocusLoss = true;
@@ -10507,6 +10508,7 @@ bool ImGui::BeginDragDropSource(ImGuiDragDropFlags flags)
             if (is_hovered && g.IO.MouseClicked[mouse_button])
             {
                 SetActiveID(source_id, window);
+                g.ActiveIdMouseButton = mouse_button;
                 FocusWindow(window);
             }
             if (g.ActiveId == source_id) // Allow the underlying widget to display/return hovered during the mouse release frame, else we would get a flicker.
