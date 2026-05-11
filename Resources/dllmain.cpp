@@ -20,4 +20,3 @@ auto __stdcall DllMain( HINSTANCE hModule, DWORD dwReason, LPVOID lpReserved ) -
 	}
 	return true;
 }
-

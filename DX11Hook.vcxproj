@@ -54,6 +54,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
@@ -171,8 +172,9 @@
     <ClInclude Include="Core\Utils\definitions.hpp" />
     <ClInclude Include="Core\Utils\memory.hpp" />
     <ClInclude Include="Core\Utils\xorstr.hpp" />
-    <ClInclude Include="ice\Hooks\hooks.hpp" />
+    <ClInclude Include="ice\Hooks\functions\rappel_constructor.hpp" />
     <ClInclude Include="ice\IceBox.hpp" />
+    <ClInclude Include="ice\UbiHookBypass\UbiHook.hpp" />
     <ClInclude Include="Resources\config.hpp" />
     <ClInclude Include="Resources\Hook\directx\d3d11hook.hpp" />
     <ClInclude Include="Resources\Hook\directx\Rendering\interface.hpp" />
@@ -189,5 +191,6 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
   </ImportGroup>
 </Project>

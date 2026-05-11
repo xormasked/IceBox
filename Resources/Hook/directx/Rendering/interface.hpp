@@ -29,7 +29,7 @@ inline const float messageDuration = 2.0f;
 inline float currentTime = 0.0f;
 
 namespace Render {
-    inline bool menu_open = true;
+	inline bool menu_open = true;
 
 	void RenderConsole( );
 	auto user_interface( ) -> void;
