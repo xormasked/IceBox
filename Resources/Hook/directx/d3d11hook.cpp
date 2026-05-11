@@ -104,41 +104,61 @@ namespace d3d11 {
         ImGui_ImplDX11_NewFrame( );
         ImGui_ImplWin32_NewFrame( );
 
-        IceBox::rage_bot_run( visuals::RageBot );
+        const bool round_active =
+            Scimitar::round_state::CurrentState( Scimitar::round_state::Prep ) ||
+            Scimitar::round_state::CurrentState( Scimitar::round_state::Action );
+
+        if ( round_active )
+            IceBox::rage_bot_run( visuals::RageBot );
 
         ImGui::NewFrame( );
 
 #ifdef _WIN64
         static bool s_aspect_toggle_last = false;
-        if ( visuals::AspectRatioHook != s_aspect_toggle_last ) {
-            if ( visuals::AspectRatioHook ) {
-                if ( !IceBox::aspect_ratio_install( ) )
-                    visuals::AspectRatioHook = false;
-            } else
-                IceBox::aspect_ratio_uninstall( );
-            s_aspect_toggle_last = visuals::AspectRatioHook;
-        }
-        if ( visuals::AspectRatioHook && IceBox::aspect_ratio_installed( ) )
-            aspect_ratio_live = visuals::AspectRatio;
-
         static bool s_run_shoot_last = false;
-        if ( visuals::RunAndShoot != s_run_shoot_last ) {
-            if ( visuals::RunAndShoot ) {
-                if ( !IceBox::run_and_shoot_install( ) )
-                    visuals::RunAndShoot = false;
-            } else
-                IceBox::run_and_shoot_uninstall( );
+
+        if ( !round_active ) {
+            IceBox::aspect_ratio_uninstall( );
+            IceBox::run_and_shoot_uninstall( );
+            s_aspect_toggle_last = visuals::AspectRatioHook;
             s_run_shoot_last = visuals::RunAndShoot;
+        } else {
+            if ( visuals::AspectRatioHook != s_aspect_toggle_last ) {
+                if ( visuals::AspectRatioHook ) {
+                    if ( !IceBox::aspect_ratio_install( ) )
+                        visuals::AspectRatioHook = false;
+                } else
+                    IceBox::aspect_ratio_uninstall( );
+                s_aspect_toggle_last = visuals::AspectRatioHook;
+            } else if ( visuals::AspectRatioHook && !IceBox::aspect_ratio_installed( ) ) {
+                IceBox::aspect_ratio_install( );
+            }
+
+            if ( visuals::RunAndShoot != s_run_shoot_last ) {
+                if ( visuals::RunAndShoot ) {
+                    if ( !IceBox::run_and_shoot_install( ) )
+                        visuals::RunAndShoot = false;
+                } else
+                    IceBox::run_and_shoot_uninstall( );
+                s_run_shoot_last = visuals::RunAndShoot;
+            } else if ( visuals::RunAndShoot && !IceBox::run_and_shoot_installed( ) ) {
+                IceBox::run_and_shoot_install( );
+            }
         }
+
+        if ( round_active && visuals::AspectRatioHook && IceBox::aspect_ratio_installed( ) )
+            aspect_ratio_live = visuals::AspectRatio;
 #endif
 
         Render::Renderables( );
 
         Render::user_interface( );
 
-        IceBox::camera_fx_apply_fov( );
+        if ( round_active ) {
+            IceBox::camera_fx_apply_fov( );
 
-        IceBox::long_melee( visuals::LongMelee );
+            IceBox::long_melee( visuals::LongMelee );
+        }
 
         ImGui::EndFrame( );
         ImGui::Render( );
