@@ -38,6 +38,52 @@ namespace Scimitar {
         return Memory::ReadPtr<uint64_t>( Base, Chain );
     }
 
+    // Same pattern as get_camera_fx: resolve ctx; vertical FOV radians at +0xBB8 (PFOV) / +0xBBC (WFOV).
+    inline auto get_camera_fov( )
+    {
+        uint64_t Base = Memory::ImageBase + 0x7EF0EB8;
+        std::vector<uintptr_t> Chain = { 0x10 };
+
+        return Memory::ReadPtr<uint64_t>( Base, Chain );
+    }
+
+    namespace camera_fov_offsets {
+        inline constexpr uintptr_t pfov = 0xBB8;
+        inline constexpr uintptr_t wfov = 0xBBC;
+    }
+
+    inline float get_PFOV( )
+    {
+        const uint64_t ctx = get_camera_fov( );
+        if ( !ctx )
+            return 0.f;
+        return Memory::Read<float>( static_cast< uintptr_t >( ctx ) + camera_fov_offsets::pfov );
+    }
+
+    inline float get_WFOV( )
+    {
+        const uint64_t ctx = get_camera_fov( );
+        if ( !ctx )
+            return 0.f;
+        return Memory::Read<float>( static_cast< uintptr_t >( ctx ) + camera_fov_offsets::wfov );
+    }
+
+    inline void set_PFOV( float radians )
+    {
+        const uint64_t ctx = get_camera_fov( );
+        if ( !ctx )
+            return;
+        Memory::Write<float>( static_cast< uintptr_t >( ctx ) + camera_fov_offsets::pfov, radians );
+    }
+
+    inline void set_WFOV( float radians )
+    {
+        const uint64_t ctx = get_camera_fov( );
+        if ( !ctx )
+            return;
+        Memory::Write<float>( static_cast< uintptr_t >( ctx ) + camera_fov_offsets::wfov, radians );
+    }
+
     class view_translation {
     public:
         static view_translation* get( )

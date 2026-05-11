@@ -63,7 +63,7 @@ namespace __RaycastData {
     }
 
 
-    inline static auto is_penetrable( ubiVector4 src, ubiVector4 dst ) -> __int64
+    static auto is_penetrable( ubiVector4 src, ubiVector4 dst ) -> __int64
     {
         try
         {
@@ -79,26 +79,21 @@ namespace __RaycastData {
             if ( !valid_pointer( physicsWorld ) )
                 return 1LL;
 
-            auto fnRayCast = reinterpret_cast< unsigned __int8( __fastcall* )( unsigned __int64, _QWORD*, void*, void*, _QWORD* ) >(
-                Memory::ImageBase + 0x1244E40
-                );
+            auto fnRayCast = reinterpret_cast< bool( __fastcall* )( std::uintptr_t, void*, ubiVector4, ubiVector4, __int64* ) >( decl_rva( 0x1244E40 ) );
 
-            auto fnCleanUp = reinterpret_cast< void( __fastcall* )( _QWORD* ) >(
-                Memory::ImageBase + 0x11A4700
-                );
+            auto fnCleanUp = reinterpret_cast< void( __fastcall* )( void* ) >( decl_rva( 0x11A4700 ) );
 
-            _QWORD rayData[ 30 ]{};
-            memset( rayData, 0, 0xD0 );
+            __int64 rayData[ 29 ];
 
+            memset( rayData, 0, 0xD0ui64 );
             LODWORD( rayData[ 2 ] ) = 35665087;
             WORD2( rayData[ 2 ] ) = 256;
             LOBYTE( rayData[ 14 ] ) = 32;
             LOBYTE( rayData[ 21 ] ) = 0;
 
-            ubiVector4 rayStart = src;
-            ubiVector4 rayEnd = dst;
+            *( uint8_t* ) ( rayData + 0x15 ) = false;
 
-            if ( !fnRayCast( physicsWorld, rayData, &rayEnd, &rayStart, &rayData[ 15 ] ) )
+            if ( !fnRayCast( physicsWorld, rayData, dst, src, &rayData[ 15 ] ) )
             {
                 fnCleanUp( &rayData[ 15 ] );
                 return 3LL;

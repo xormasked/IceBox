@@ -1,10 +1,7 @@
 #include "../interface.hpp"
 
-#include "../../../../../Core/Engine/Anvil/scimitar.hpp"
 #include "../../../../config.hpp"
 #include "../../d3d11hook.hpp"
-#include <cstdint>
-#include <cstdio>
 
 namespace Render {
 
@@ -13,7 +10,7 @@ namespace Render {
         if ( !menu_open ) return;
 
         ImGui::SetNextWindowSize( ImVec2( 700, 520 ), ImGuiCond_FirstUseEver );
-        ImGui::Begin( "Ultraviolet.Paste", nullptr, ImGuiWindowFlags_NoCollapse );
+        ImGui::Begin( "IceBox Public", nullptr, ImGuiWindowFlags_NoCollapse );
 
         if ( ImGui::BeginTabBar( "MainTabs" ) ) {
             if ( ImGui::BeginTabItem( "Visuals" ) ) {
@@ -28,27 +25,31 @@ namespace Render {
                 ImGui::ColorEdit3( "##SkeletonColor", &visuals::SkeletonColor.x, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_InputRGB );
                 ImGui::SliderFloat( "Skeleton Thickness", &visuals::SkeletonThickness, 0.5f, 5.0f, "%.1f" );
                 ImGui::Checkbox( "Skeleton VisCheck", &visuals::SkeletonVisCheck );
-                ImGui::Checkbox( "Team Check", &visuals::TeamCheck );
+                ImGui::Checkbox( "Aspect ratio (camera +0x128)", &visuals::AspectRatioHook );
+                ImGui::SliderFloat( "Aspect ratio", &visuals::AspectRatio, 0.1f, 2.0f, "%.2f" );
+                ImGui::Separator( );
+                ImGui::Checkbox( "Fov", &visuals::FovEnabled );
+                ImGui::BeginDisabled( !visuals::FovEnabled );
+                ImGui::SliderFloat( "Eye Fov", &visuals::EyeFovDegrees, 20.f, 120.f, "%.0f deg" );
+                ImGui::SliderFloat( "Viewmodel Fov", &visuals::ViewmodelFovDegrees, 20.f, 120.f, "%.0f deg" );
+                ImGui::EndDisabled( );
                 ImGui::EndTabItem( );
             }
 
             if ( ImGui::BeginTabItem( "Misc" ) ) {
-                ImGui::Checkbox( "Aspect ratio", &visuals::AspectRatioHook );
-                ImGui::SliderFloat( "Aspect ratio", &visuals::AspectRatio, 0.1f, 2.0f, "%.2f" );
-                ImGui::Checkbox( "Visible-Bone Ragebot", &visuals::RageBot );
-                if ( ImGui::Button( "Print cHealdWeapon Address", ImVec2( 220, 30 ) ) ) {
-
-
-                    auto* chealdweaponaddress = Scimitar::game_manager::get( )->get_local_controller( )->get_current_weapon( );
-
-
-                    printf( "weapon_entity: 0x%llX", chealdweaponaddress );
+                ImGui::Checkbox( "Ragebot", &visuals::RageBot );
+                if ( visuals::RageBot ) {
+                    ImGui::Indent( );
+                    ImGui::Checkbox( "Vischeck", &visuals::RageBotVisCheck );
+                    ImGui::Checkbox( "Pencheck", &visuals::RageBotPenCheck );
+                    ImGui::Unindent( );
                 }
+                ImGui::EndTabItem( );
+            }
 
-
-                if ( ImGui::Button( "Uninject", ImVec2( 150, 30 ) ) ) {
+            if ( ImGui::BeginTabItem( "Settings" ) ) {
+                if ( ImGui::Button( "Uninject", ImVec2( 150, 30 ) ) )
                     d3d11::should_uninject = true;
-                }
                 ImGui::EndTabItem( );
             }
 

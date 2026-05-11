@@ -7,6 +7,7 @@
 #include "../../../Core/Crash Handler/crash_handler.hpp"
 #include "../../../ice/Hooks/functions/rappel_constructor.hpp"
 #include "../../../ice/Features/aspect_ratio/aspect_ratio.hpp"
+#include "../../../ice/Features/camera_fx.hpp"
 #include "../../../Core/Utils/Haru Hook/haru_hook.hpp"
 #include "../../../Core/Utils/Haru Hook/mid_hook.hpp"
 #include "../../../Resources/config.hpp"
@@ -122,6 +123,8 @@ namespace d3d11 {
         Render::Renderables( );
 
         Render::user_interface( );
+
+        camera_fx::apply_fov( );
 
         ImGui::EndFrame( );
         ImGui::Render( );

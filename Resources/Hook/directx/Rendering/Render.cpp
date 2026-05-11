@@ -58,11 +58,6 @@ namespace Render {
 
         auto* localController = gameManager->get_local_controller( );
         if ( !localController ) return;
-        auto* localPawn = localController->pawn_decrypt( );
-        if ( !localPawn ) return;
-        auto* localEntity = localPawn->entity_decrypt( );
-        if ( !localEntity ) return;
-        const BYTE localTeam = localEntity->GetAlliance( );
 
         auto controllerList = gameManager->get_controller_list( );
         int controllerCount = gameManager->get_controller_size( );
@@ -93,7 +88,6 @@ namespace Render {
             }
 
             if ( !visuals::Skeleton ) continue;
-            if ( visuals::TeamCheck && entity->GetAlliance( ) == localTeam ) continue;
 
             auto* skeleton = entity->get_skeleton( );
             if ( !skeleton ) continue;

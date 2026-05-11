@@ -6,6 +6,8 @@
 
 namespace visuals {
     inline bool RageBot = false;
+    inline bool RageBotVisCheck = false;
+    inline bool RageBotPenCheck = false;
 
     inline bool AspectRatioHook = false;
     inline float AspectRatio = 1.5f;
@@ -19,7 +21,10 @@ namespace visuals {
     inline ImVec4 SkeletonColor = { 1.f, 1.f, 1.f, 1.f };
     inline float SkeletonThickness = 1.5f;
     inline bool SkeletonVisCheck = false;
-    inline bool TeamCheck = false;
+
+    inline bool FovEnabled = false;
+    inline float EyeFovDegrees = 90.f;
+    inline float ViewmodelFovDegrees = 50.f;
 }
 
 namespace globals {
@@ -33,6 +38,7 @@ namespace RageBot
 {
     inline bool on = false;
     inline bool vischeck = false;
+    inline bool pencheck = false;
 
     inline int DelayMs = 0;
 }

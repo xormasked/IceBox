@@ -356,6 +356,19 @@ namespace havok {
     using Vec3 = ubiVector3;
     using Vec4 = ubiVector4;
 
+    inline constexpr float kDegreesToRadians = 0.01745329251994329577f;
+    inline constexpr float kRadiansToDegrees = 57.295779513082320876f;
+
+    inline constexpr float deg_to_rad( float degrees ) noexcept
+    {
+        return degrees * kDegreesToRadians;
+    }
+
+    inline constexpr float rad_to_deg( float radians ) noexcept
+    {
+        return radians * kRadiansToDegrees;
+    }
+
     inline Vec4 EulerToQuaternion( float pitch, float yaw, float roll )
     {
         float pitchRad = pitch * 0.01745329251f * 0.5f;

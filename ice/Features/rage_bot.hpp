@@ -4,36 +4,24 @@
 #include "../../Core/Engine/Anvil/Raycasting/RayCasting.hpp"
 #include "../../Resources/config.hpp"
 
-#include <Windows.h>
 #include <cmath>
 
 namespace rage_bot {
 
-    inline const BipedBoneID bones[ ] = {
+    inline constexpr BipedBoneID k_bones[ ] = {
+        BipedBoneID::BONE_HEAD,
         BipedBoneID::BONE_NECK,
-        BipedBoneID::BONE_SPINE,
         BipedBoneID::BONE_SPINE2,
         BipedBoneID::BONE_SPINE1,
+        BipedBoneID::BONE_SPINE,
         BipedBoneID::BONE_LEFTSHOULDER,
-        BipedBoneID::BONE_LEFTARM,
-        BipedBoneID::BONE_LEFTELBOW,
-        BipedBoneID::BONE_LEFTHAND,
         BipedBoneID::BONE_RIGHTSHOULDER,
-        BipedBoneID::BONE_RIGHTARM,
-        BipedBoneID::BONE_RIGHTELBOW,
-        BipedBoneID::BONE_RIGHTHAND,
-        BipedBoneID::BONE_LHIP,
-        BipedBoneID::BONE_LKNEE,
-        BipedBoneID::BONE_LFOOT,
-        BipedBoneID::BONE_RHIP,
-        BipedBoneID::BONE_RKNEE,
-        BipedBoneID::BONE_RFOOT
     };
 
-    inline bool valid_bone_position( const havok::Vec4& p )
+    inline bool bone_ok( const havok::Vec4& p )
     {
         return std::isfinite( p.x ) && std::isfinite( p.y ) && std::isfinite( p.z ) &&
-            ( p.x != 0.0f || p.y != 0.0f || p.z != 0.0f );
+            ( p.x != 0.f || p.y != 0.f || p.z != 0.f );
     }
 
     inline void run( bool enable )
@@ -43,53 +31,55 @@ namespace rage_bot {
              !Scimitar::round_state::CurrentState( Scimitar::round_state::Action ) )
             return;
 
-        auto* game_manager = Scimitar::game_manager::get( );
+        auto* const gm = Scimitar::game_manager::get( );
+        auto* const lc = gm ? gm->get_local_controller( ) : nullptr;
+        if ( !Memory::valid_pointer( lc ) ) return;
 
-        auto* local_controller = game_manager->get_local_controller( );
-        auto* local_skeleton = local_controller->pawn_decrypt( )->entity_decrypt( )->get_skeleton( );
+        auto* const lp = lc->pawn_decrypt( );
+        auto* const le = lp && Memory::valid_pointer( lp ) ? lp->entity_decrypt( ) : nullptr;
+        auto* const ls = le && Memory::valid_pointer( le ) ? le->get_skeleton( ) : nullptr;
+        if ( !Memory::valid_pointer( ls ) ) return;
 
-        auto* weap = local_controller->get_current_weapon( );
+        auto* const weap = lc->get_current_weapon( );
         if ( !Memory::valid_pointer( weap ) ) return;
 
-        const havok::Vec4 local_head = local_skeleton->bone( BipedBoneID::BONE_HEAD );
-        if ( !valid_bone_position( local_head ) ) return;
-        const ubiVector4 shot_source( local_head.x, local_head.y, local_head.z, 1.0f );
+        const havok::Vec4 lh = ls->bone( BipedBoneID::BONE_HEAD );
+        if ( !bone_ok( lh ) ) return;
+        const ubiVector4 src( lh.x, lh.y, lh.z, 1.f );
 
-        auto* controller_list = game_manager->get_controller_list( );
-        int controller_count = game_manager->get_controller_size( );
-        if ( !Memory::valid_pointer( controller_list ) || controller_count <= 0 ) return;
-        if ( controller_count > 256 ) controller_count = 256;
+        auto* const clist = gm->get_controller_list( );
+        int n = gm->get_controller_size( );
+        if ( !Memory::valid_pointer( clist ) || n <= 0 ) return;
+        if ( n > 256 ) n = 256;
 
-        static DWORD last_shot_tick = 0;
-        const DWORD now = GetTickCount( );
-        constexpr DWORD kMinShotIntervalMs = 35;
-        if ( now - last_shot_tick < kMinShotIntervalMs ) return;
+        const uintptr_t list_u = reinterpret_cast< uintptr_t >( clist );
 
-        for ( int i = 0; i < controller_count; ++i ) {
-            auto* controller = *reinterpret_cast< Scimitar::Controller** >(
-                reinterpret_cast< uintptr_t >( controller_list ) + ( 0x8 * i ) );
-            if ( !Memory::valid_pointer( controller ) || controller == local_controller ) continue;
+        for ( int i = 0; i < n; ++i ) {
+            auto* const oc = *reinterpret_cast< Scimitar::Controller** >( list_u + uintptr_t( i ) * 8 );
+            if ( !Memory::valid_pointer( oc ) || oc == lc ) continue;
 
-            auto* pawn = controller->pawn_decrypt( );
-            if ( !Memory::valid_pointer( pawn ) ) continue;
-            auto* entity = pawn->entity_decrypt( );
-            if ( !Memory::valid_pointer( entity ) ) continue;
+            auto* const op = oc->pawn_decrypt( );
+            auto* const oe = op && Memory::valid_pointer( op ) ? op->entity_decrypt( ) : nullptr;
+            auto* const sk = oe && Memory::valid_pointer( oe ) ? oe->get_skeleton( ) : nullptr;
+            if ( !Memory::valid_pointer( sk ) ) continue;
 
-            auto* skeleton = entity->get_skeleton( );
-            if ( !Memory::valid_pointer( skeleton ) ) continue;
+            for ( const auto id : k_bones ) {
+                const havok::Vec4 b = sk->bone( id );
+                if ( !bone_ok( b ) ) continue;
+                const ubiVector4 dst( b.x, b.y, b.z, 1.f );
 
-            for ( const auto bone_id : bones ) {
-                const havok::Vec4 bone_pos = skeleton->bone( bone_id );
-                if ( !valid_bone_position( bone_pos ) ) continue;
+                bool ok = true;
+                if ( visuals::RageBotPenCheck )
+                    ok = ( __RaycastData::is_penetrable( src, dst ) == 3LL );
+                else if ( visuals::RageBotVisCheck )
+                    ok = __RaycastData::is_visible( src, dst );
 
-                const ubiVector4 shot_destination( bone_pos.x, bone_pos.y, bone_pos.z, 1.0f );
-
-                if ( __RaycastData::is_visible( shot_source, shot_destination ) ) {
-                    weap->create_bullet( shot_source, shot_destination );
-                    last_shot_tick = now;
+                if ( ok ) {
+                    weap->create_bullet( src, dst );
                     return;
                 }
             }
         }
     }
-}
+
+} // namespace rage_bot
