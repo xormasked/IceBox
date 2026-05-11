@@ -3,7 +3,7 @@
 #include "../../UbiHookBypass/UbiHook.hpp"
 #include "../../../Core/Utils/memory.hpp"
 
-namespace rappel_hook {
+namespace rappel_hook { // this function gets called at round start
 
     using fn_t = void* ( __fastcall* )( void* rcx );
     inline fn_t o_fn = nullptr;
