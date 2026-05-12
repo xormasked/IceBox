@@ -6,8 +6,8 @@
 #include "../../../Core/Utils/memory.hpp"
 
 extern "C" {
-extern unsigned long long unlock_all_mid_resume;
-void unlock_all_mid_stub( );
+	extern unsigned long long unlock_all_mid_resume;
+	void unlock_all_mid_stub( );
 }
 
 namespace {

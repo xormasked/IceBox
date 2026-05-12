@@ -19,6 +19,7 @@ namespace visuals {
 
     inline bool JitterPeek = false;
     inline int JitterPeekVk = 'G'; // default: G
+    inline int JitterPeekDelayMs = 80;
 
     inline bool AspectRatioHook = false;
     inline float AspectRatio = 1.5f;

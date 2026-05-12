@@ -6,12 +6,6 @@
 
 #include <Windows.h>
 
-namespace {
-
-constexpr float k_snap_interval_sec = 0.08f;
-
-} // namespace
-
 void IceBox::jitter_peek_tick( float delta_seconds )
 {
 	static bool s_g_was_held = false;
@@ -45,9 +39,11 @@ void IceBox::jitter_peek_tick( float delta_seconds )
 		s_accum = 0.f;
 	}
 
+	const float interval_sec = static_cast< float >( visuals::JitterPeekDelayMs ) * 0.001f;
+
 	s_accum += delta_seconds;
-	while ( s_accum >= k_snap_interval_sec ) {
-		s_accum -= k_snap_interval_sec;
+	while ( s_accum >= interval_sec ) {
+		s_accum -= interval_sec;
 		ent->set_origin( s_saved );
 	}
 }

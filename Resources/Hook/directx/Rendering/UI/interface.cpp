@@ -69,24 +69,21 @@ namespace Render {
                 return "Mouse R";
             case VK_MBUTTON:
                 return "Mouse M";
+            case VK_XBUTTON1:
+                return "Mouse 4";
+            case VK_XBUTTON2:
+                return "Mouse 5";
             default:
                 std::snprintf( buf, sizeof( buf ), "VK 0x%02X", vk );
                 return buf;
             }
         }
 
-        bool jitter_peek_capture_should_ignore_vk( int vk )
+        bool jitter_peek_any_mouse_down( )
         {
-            switch ( vk ) {
-            case VK_LBUTTON:
-            case VK_RBUTTON:
-            case VK_MBUTTON:
-            case VK_XBUTTON1:
-            case VK_XBUTTON2:
-                return true;
-            default:
-                return false;
-            }
+            return ( GetAsyncKeyState( VK_LBUTTON ) & 0x8000 ) != 0 || ( GetAsyncKeyState( VK_RBUTTON ) & 0x8000 ) != 0 ||
+                   ( GetAsyncKeyState( VK_MBUTTON ) & 0x8000 ) != 0 || ( GetAsyncKeyState( VK_XBUTTON1 ) & 0x8000 ) != 0 ||
+                   ( GetAsyncKeyState( VK_XBUTTON2 ) & 0x8000 ) != 0;
         }
 
     } // namespace
@@ -133,8 +130,11 @@ namespace Render {
 
                 static bool s_jitter_peek_listen = false;
                 static double s_jitter_peek_listen_after = 0.0;
-                if ( !visuals::JitterPeek )
+                static bool s_jitter_peek_wait_mouse_release = false;
+                if ( !visuals::JitterPeek ) {
                     s_jitter_peek_listen = false;
+                    s_jitter_peek_wait_mouse_release = false;
+                }
 
                 if ( visuals::JitterPeek ) {
                     ImGui::Indent( );
@@ -153,6 +153,7 @@ namespace Render {
                     if ( ImGui::Button( btn_label, hotkey_btn_size ) ) {
                         s_jitter_peek_listen = true;
                         s_jitter_peek_listen_after = ImGui::GetTime( ) + 0.18;
+                        s_jitter_peek_wait_mouse_release = true;
                     }
                     ImGui::PopStyleColor( 4 );
                     ImGui::PopID( );
@@ -160,21 +161,29 @@ namespace Render {
                     if ( s_jitter_peek_listen ) {
                         const double now = ImGui::GetTime( );
                         if ( now >= s_jitter_peek_listen_after ) {
-                            if ( ( GetAsyncKeyState( VK_ESCAPE ) & 0x8000 ) != 0 )
+                            if ( ( GetAsyncKeyState( VK_ESCAPE ) & 0x8000 ) != 0 ) {
                                 s_jitter_peek_listen = false;
-                            else {
-                                for ( int vk = 1; vk < 256; ++vk ) {
-                                    if ( jitter_peek_capture_should_ignore_vk( vk ) )
-                                        continue;
-                                    if ( ( GetAsyncKeyState( vk ) & 0x8000 ) != 0 ) {
-                                        visuals::JitterPeekVk = vk;
-                                        s_jitter_peek_listen = false;
-                                        break;
+                                s_jitter_peek_wait_mouse_release = false;
+                            } else {
+                                if ( s_jitter_peek_wait_mouse_release ) {
+                                    if ( !jitter_peek_any_mouse_down( ) )
+                                        s_jitter_peek_wait_mouse_release = false;
+                                }
+
+                                if ( !s_jitter_peek_wait_mouse_release ) {
+                                    for ( int vk = 1; vk < 256; ++vk ) {
+                                        if ( ( GetAsyncKeyState( vk ) & 0x8000 ) != 0 ) {
+                                            visuals::JitterPeekVk = vk;
+                                            s_jitter_peek_listen = false;
+                                            break;
+                                        }
                                     }
                                 }
                             }
                         }
                     }
+
+                    ImGui::SliderInt( "Delay (ms)", &visuals::JitterPeekDelayMs, 10, 150 );
 
                     ImGui::Unindent( );
                 }
