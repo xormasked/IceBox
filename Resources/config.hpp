@@ -13,8 +13,12 @@ namespace visuals {
 
 	inline bool ThirdPerson = false;
 
-	inline bool RaycastClosestDebug = false;
+    inline bool RaycastClosestDebug = false;
     inline bool RunAndShoot = false;
+    inline bool UnlockAllMidHook = false;
+
+    inline bool JitterPeek = false;
+    inline int JitterPeekVk = 'G'; // default: G
 
     inline bool AspectRatioHook = false;
     inline float AspectRatio = 1.5f;

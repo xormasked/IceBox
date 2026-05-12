@@ -8,6 +8,9 @@
 
 #include "skeletons.h"
 
+#include <cstring>
+#include <xmmintrin.h>
+
 namespace Scimitar {
 
     enum EDESrvComponents : uint32_t
@@ -62,6 +65,7 @@ namespace Scimitar {
     using CreateShotFn = __int64( __fastcall* )( __int64 Weapon_Infoa1, __m128* source, const __m128i* Direction );
     using EDSrvListFn = uintptr_t( __fastcall* )( unsigned __int8* a1, Entity* a2 );
     using ResolveComponentFn = uintptr_t( __fastcall* )( uintptr_t a1, unsigned int type_hash, int unk );
+    using SetGlobalMatrixFn = __int64( __fastcall* )( __int64 entity, __m128* matrix, char one );
 
     inline GetSkeletonComponentFn get_skeleton_component = nullptr;
     inline GetAnimationComponentFn get_animation_component_fn = nullptr;
@@ -69,6 +73,7 @@ namespace Scimitar {
     inline CreateShotFn create_shot = nullptr;
     inline EDSrvListFn ed_srv_list = nullptr;
     inline ResolveComponentFn resolve_component_game = nullptr;
+    inline SetGlobalMatrixFn set_global_matrix_D871E0 = nullptr;
 
     inline auto get_camera_fx( )
     {
@@ -268,6 +273,11 @@ namespace Scimitar {
             return *reinterpret_cast< ubiVector3* >( this + 0x50 );
         }
 
+        ubiVector4 Origin4( ) const
+        {
+            return *reinterpret_cast< ubiVector4* >( reinterpret_cast< uintptr_t >( this ) + 0x50 );
+        }
+
         cskeleton* get_skeleton( )
         {
             return get_skeleton_component( reinterpret_cast< unsigned __int8* >( this + 0x1CB ), this );
@@ -292,6 +302,23 @@ namespace Scimitar {
 
             return Memory::Read< uintptr_t >( resolve_component_game( list_header, hash, 0 ) );
 
+        }
+
+        void set_origin( const ubiVector4& origin, char one = 1 )
+        {
+            if ( !Memory::valid_pointer( this ) || !set_global_matrix_D871E0 )
+                return;
+
+            std::memcpy( reinterpret_cast< void* >( reinterpret_cast< uintptr_t >( this ) + 0x50 ), &origin,
+                         sizeof( ubiVector4 ) );
+
+            alignas( 16 ) __m128 matrix[ 4 ];
+            std::memcpy( matrix, reinterpret_cast< void* >( reinterpret_cast< uintptr_t >( this ) + 0x20 ),
+                         sizeof( matrix ) );
+
+            set_global_matrix_D871E0( reinterpret_cast< __int64 >( this ), matrix, one );
+
+            std::memcpy( matrix, &origin, sizeof( ubiVector4 ) );
         }
 
     };
@@ -359,6 +386,7 @@ namespace Scimitar {
         create_shot = reinterpret_cast< CreateShotFn >( Memory::ImageBase + 0x1C4E7B0 );
         ed_srv_list = reinterpret_cast< EDSrvListFn >( Memory::ImageBase + 0xD7EDF0 );
         resolve_component_game = reinterpret_cast< ResolveComponentFn >( Memory::ImageBase + 0x181A810 );
+        set_global_matrix_D871E0 = reinterpret_cast< SetGlobalMatrixFn >( Memory::ImageBase + 0xD871E0 );
     }
 }
 

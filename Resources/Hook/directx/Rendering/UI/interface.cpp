@@ -3,7 +3,93 @@
 #include "../../../../config.hpp"
 #include "../../d3d11hook.hpp"
 
+#include <Windows.h>
+
+#include <cstdio>
+
 namespace Render {
+
+    namespace {
+
+        auto jitter_peek_vk_label( int vk, char ( &buf )[ 64 ] ) -> const char*
+        {
+            if ( vk >= '0' && vk <= '9' ) {
+                std::snprintf( buf, sizeof( buf ), "%c", vk );
+                return buf;
+            }
+            if ( vk >= 'A' && vk <= 'Z' ) {
+                std::snprintf( buf, sizeof( buf ), "%c", vk );
+                return buf;
+            }
+            if ( vk >= 'a' && vk <= 'z' ) {
+                std::snprintf( buf, sizeof( buf ), "%c", vk - 32 );
+                return buf;
+            }
+
+            switch ( vk ) {
+            case VK_SPACE:
+                return "Space";
+            case VK_TAB:
+                return "Tab";
+            case VK_RETURN:
+                return "Enter";
+            case VK_SHIFT:
+                return "Shift";
+            case VK_CONTROL:
+                return "Ctrl";
+            case VK_MENU:
+                return "Alt";
+            case VK_ESCAPE:
+                return "Escape";
+            case VK_BACK:
+                return "Backspace";
+            case VK_DELETE:
+                return "Delete";
+            case VK_INSERT:
+                return "Insert";
+            case VK_HOME:
+                return "Home";
+            case VK_END:
+                return "End";
+            case VK_PRIOR:
+                return "Page Up";
+            case VK_NEXT:
+                return "Page Down";
+            case VK_LEFT:
+                return "Left";
+            case VK_RIGHT:
+                return "Right";
+            case VK_UP:
+                return "Up";
+            case VK_DOWN:
+                return "Down";
+            case VK_LBUTTON:
+                return "Mouse L";
+            case VK_RBUTTON:
+                return "Mouse R";
+            case VK_MBUTTON:
+                return "Mouse M";
+            default:
+                std::snprintf( buf, sizeof( buf ), "VK 0x%02X", vk );
+                return buf;
+            }
+        }
+
+        bool jitter_peek_capture_should_ignore_vk( int vk )
+        {
+            switch ( vk ) {
+            case VK_LBUTTON:
+            case VK_RBUTTON:
+            case VK_MBUTTON:
+            case VK_XBUTTON1:
+            case VK_XBUTTON2:
+                return true;
+            default:
+                return false;
+            }
+        }
+
+    } // namespace
 
     auto user_interface( ) -> void
     {
@@ -42,6 +128,56 @@ namespace Render {
                 ImGui::Checkbox( "Third person", &visuals::ThirdPerson );
                 ImGui::Checkbox( "Raycast debug (console)", &visuals::RaycastClosestDebug );
                 ImGui::Checkbox( "Run and shoot", &visuals::RunAndShoot );
+                ImGui::Checkbox( "Unlock all", &visuals::UnlockAllMidHook );
+                ImGui::Checkbox( "Jitter peek", &visuals::JitterPeek );
+
+                static bool s_jitter_peek_listen = false;
+                static double s_jitter_peek_listen_after = 0.0;
+                if ( !visuals::JitterPeek )
+                    s_jitter_peek_listen = false;
+
+                if ( visuals::JitterPeek ) {
+                    ImGui::Indent( );
+
+                    char vk_buf[ 64 ];
+                    const char* vk_text = jitter_peek_vk_label( visuals::JitterPeekVk, vk_buf );
+
+                    const char* btn_label = s_jitter_peek_listen ? "" : vk_text;
+                    const ImVec2 hotkey_btn_size( 76.f, 22.f );
+
+                    ImGui::PushID( "JitterPeekHotkey" );
+                    ImGui::PushStyleColor( ImGuiCol_Button, ImVec4( 0.40f, 0.40f, 0.43f, 1.00f ) );
+                    ImGui::PushStyleColor( ImGuiCol_ButtonHovered, ImVec4( 0.48f, 0.48f, 0.51f, 1.00f ) );
+                    ImGui::PushStyleColor( ImGuiCol_ButtonActive, ImVec4( 0.34f, 0.34f, 0.37f, 1.00f ) );
+                    ImGui::PushStyleColor( ImGuiCol_Text, ImVec4( 0.90f, 0.90f, 0.92f, 1.00f ) );
+                    if ( ImGui::Button( btn_label, hotkey_btn_size ) ) {
+                        s_jitter_peek_listen = true;
+                        s_jitter_peek_listen_after = ImGui::GetTime( ) + 0.18;
+                    }
+                    ImGui::PopStyleColor( 4 );
+                    ImGui::PopID( );
+
+                    if ( s_jitter_peek_listen ) {
+                        const double now = ImGui::GetTime( );
+                        if ( now >= s_jitter_peek_listen_after ) {
+                            if ( ( GetAsyncKeyState( VK_ESCAPE ) & 0x8000 ) != 0 )
+                                s_jitter_peek_listen = false;
+                            else {
+                                for ( int vk = 1; vk < 256; ++vk ) {
+                                    if ( jitter_peek_capture_should_ignore_vk( vk ) )
+                                        continue;
+                                    if ( ( GetAsyncKeyState( vk ) & 0x8000 ) != 0 ) {
+                                        visuals::JitterPeekVk = vk;
+                                        s_jitter_peek_listen = false;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    ImGui::Unindent( );
+                }
                 if ( visuals::RageBot ) {
                     ImGui::Indent( );
                     ImGui::Checkbox( "Vischeck", &visuals::RageBotVisCheck );

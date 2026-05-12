@@ -20,6 +20,10 @@ namespace IceBox {
 	void run_and_shoot_uninstall( );
 	bool run_and_shoot_installed( );
 
+	bool unlock_all_install( );
+	void unlock_all_uninstall( );
+	bool unlock_all_installed( );
+
 	auto third_person( bool enable, float delta_seconds ) -> void;
 
 	void third_person_reset( );
@@ -29,6 +33,8 @@ namespace IceBox {
 	bool raycast_debug_hit_marker_world( ubiVector3& out_world ) noexcept;
 
 	void raycast_closest_player_debug_tick( float delta_seconds );
+
+	void jitter_peek_tick( float delta_seconds );
 
 	void render_raycast_debug_overlay( float delta_seconds, ImDrawList* draw_list );
 

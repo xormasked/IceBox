@@ -115,9 +115,12 @@ namespace d3d11 {
 
         IceBox::raycast_debug_hit_marker_decay( ImGui::GetIO( ).DeltaTime );
 
+        IceBox::jitter_peek_tick( ImGui::GetIO( ).DeltaTime );
+
 #ifdef _WIN64
         static bool s_aspect_toggle_last = false;
         static bool s_run_shoot_last = false;
+        static bool s_unlock_all_last = false;
 
         if ( !round_active ) {
             IceBox::aspect_ratio_uninstall( );
@@ -146,6 +149,18 @@ namespace d3d11 {
             } else if ( visuals::RunAndShoot && !IceBox::run_and_shoot_installed( ) ) {
                 IceBox::run_and_shoot_install( );
             }
+        }
+
+        // Unlock all: same as CE — stays installed whenever the toggle is on (not tied to round state).
+        if ( visuals::UnlockAllMidHook != s_unlock_all_last ) {
+            if ( visuals::UnlockAllMidHook ) {
+                if ( !IceBox::unlock_all_install( ) )
+                    visuals::UnlockAllMidHook = false;
+            } else
+                IceBox::unlock_all_uninstall( );
+            s_unlock_all_last = visuals::UnlockAllMidHook;
+        } else if ( visuals::UnlockAllMidHook && !IceBox::unlock_all_installed( ) ) {
+            IceBox::unlock_all_install( );
         }
 
         if ( round_active && visuals::AspectRatioHook && IceBox::aspect_ratio_installed( ) )
