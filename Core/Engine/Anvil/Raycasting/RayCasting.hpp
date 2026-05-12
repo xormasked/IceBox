@@ -4,183 +4,129 @@
 #include "../../../Utils/memory.hpp"
 #include "../../../Utils/definitions.hpp"
 
+#include <cmath>
 #include <cstring>
-#include <type_traits>
-#include <vector>
-
-#include "../scimitar.hpp"
-
-
-#define decl_rva(address) reinterpret_cast<void*>(std::uintptr_t(::GetModuleHandleA(nullptr)) + (address))
-
-
-
-template<typename t>
-inline static auto valid_pointer( t pointer ) -> bool
-{
-    std::uintptr_t raw = 0;
-    if constexpr ( std::is_pointer_v<t> )
-        raw = reinterpret_cast< std::uintptr_t >( pointer );
-    else
-        raw = static_cast< std::uintptr_t >( pointer );
-    return raw > 0x400000ULL && raw < 0x7FFFFFFFFFFFULL;
-}
 
 namespace __RaycastData {
 
-    inline static auto is_visible( ubiVector4 start, ubiVector4 end ) -> bool
+    inline std::uintptr_t rva( std::uintptr_t off ) noexcept
     {
-        auto manager = *reinterpret_cast< std::uintptr_t* >( decl_rva( 0x5B1F818 ) );
-        if ( !valid_pointer( manager ) )
-            return false;
-
-        auto world = *reinterpret_cast< std::uintptr_t* >( manager + 0x20 );
-        if ( !valid_pointer( world ) )
-            return false;
-
-        auto physic_world = *reinterpret_cast< std::uintptr_t* >( world + 0xE8 );
-        if ( !valid_pointer( physic_world ) )
-            return false;
-
-        bool( __fastcall * fnRayCast )( const std::uintptr_t PhysicWorld, void* a2, ubiVector4 a3, ubiVector4 a4, __int64* a5 ) = reinterpret_cast< decltype( fnRayCast ) >( decl_rva( 0x1244E40 ) );
-        void( __fastcall * CleanUp )( void* a1 ) = ( decltype( CleanUp ) ) ( decl_rva( 0x11A4700 ) );
-
-        __int64 v27[ 29 ];
-
-        memset( v27, 0, 0xD0ui64 );
-        LODWORD( v27[ 2 ] ) = 0x126045;
-        WORD2( v27[ 2 ] ) = 0x100;
-        LOBYTE( v27[ 14 ] ) = 0x1;
-
-        *( uint8_t* ) ( v27 + 0x15 ) = false;
-        auto hm = fnRayCast( physic_world, v27, start, end, &v27[ 15 ] );
-
-        auto count = ( v27[ 17 ] & 0x3FFFFFFF );
-
-        CleanUp( &v27[ 15 ] );
-
-        return count == 0;
+        return reinterpret_cast< std::uintptr_t >( ::GetModuleHandleA( nullptr ) ) + off;
     }
 
-
-    static auto is_penetrable( ubiVector4 src, ubiVector4 dst ) -> __int64
+    inline bool vp( std::uintptr_t p ) noexcept
     {
-        try
-        {
-            auto manager = *reinterpret_cast< std::uintptr_t* >( Memory::ImageBase + 0x5B1F818 );
-            if ( !valid_pointer( manager ) )
-                return 1LL;
+        return Memory::valid_pointer( reinterpret_cast< void* >( p ) );
+    }
 
-            auto world = *reinterpret_cast< std::uintptr_t* >( manager + 0x20 );
-            if ( !valid_pointer( world ) )
-                return 1LL;
+    inline std::uintptr_t physic_world( ) noexcept
+    {
+        std::uintptr_t m = *reinterpret_cast< std::uintptr_t* >( rva( 0x5B1F818 ) );
+        if ( !vp( m ) ) return 0;
+        std::uintptr_t w = *reinterpret_cast< std::uintptr_t* >( m + 0x20 );
+        if ( !vp( w ) ) return 0;
+        std::uintptr_t p = *reinterpret_cast< std::uintptr_t* >( w + 0xE8 );
+        return vp( p ) ? p : 0;
+    }
 
-            auto physicsWorld = *reinterpret_cast< std::uintptr_t* >( world + 0xE8 );
-            if ( !valid_pointer( physicsWorld ) )
-                return 1LL;
+    using ray_fn = bool( __fastcall* )( std::uintptr_t, void*, ubiVector4, ubiVector4, __int64* );
+    using clean_fn = void( __fastcall* )( void* );
 
-            auto fnRayCast = reinterpret_cast< bool( __fastcall* )( std::uintptr_t, void*, ubiVector4, ubiVector4, __int64* ) >( decl_rva( 0x1244E40 ) );
+    inline ray_fn ray_cast( ) noexcept
+    {
+        return reinterpret_cast< ray_fn >( rva( 0x1244E40 ) );
+    }
+    inline clean_fn ray_clean( ) noexcept
+    {
+        return reinterpret_cast< clean_fn >( rva( 0x11A4700 ) );
+    }
 
-            auto fnCleanUp = reinterpret_cast< void( __fastcall* )( void* ) >( decl_rva( 0x11A4700 ) );
+    inline void dbg_first_hit( bool dbg, ubiVector3* out, __int64* rd ) noexcept
+    {
+        if ( !dbg || !out || !( rd[ 17 ] & 0x3FFFFFFF ) ) return;
+        std::uintptr_t e = static_cast< std::uintptr_t >( rd[ 16 ] );
+        if ( !vp( e ) || !vp( e + 0x2F ) ) return;
+        float x = *reinterpret_cast< float* >( e + 0x20 ), y = *reinterpret_cast< float* >( e + 0x24 ), z = *reinterpret_cast< float* >( e + 0x28 );
+        if ( std::isfinite( x ) && std::isfinite( y ) && std::isfinite( z ) ) {
+            out->x = x;
+            out->y = y;
+            out->z = z;
+        }
+    }
 
-            __int64 rayData[ 29 ];
+    inline bool is_visible( ubiVector4 start, ubiVector4 end, bool debug = false, ubiVector3* out_hit = nullptr ) noexcept
+    {
+        std::uintptr_t pw = physic_world( );
+        if ( !pw ) return false;
+        __int64 b[ 29 ];
+        memset( b, 0, 0xD0ui64 );
+        LODWORD( b[ 2 ] ) = 0x126045;
+        WORD2( b[ 2 ] ) = 0x100;
+        LOBYTE( b[ 14 ] ) = 0x1;
+        *( uint8_t* ) ( b + 0x15 ) = false;
+        ray_cast( )( pw, b, start, end, &b[ 15 ] );
+        uint32_t n = static_cast< uint32_t >( b[ 17 ] & 0x3FFFFFFF );
+        dbg_first_hit( debug, out_hit, b );
+        ray_clean( )( &b[ 15 ] );
+        return n == 0;
+    }
 
-            memset( rayData, 0, 0xD0ui64 );
-            LODWORD( rayData[ 2 ] ) = 35665087;
-            WORD2( rayData[ 2 ] ) = 256;
-            LOBYTE( rayData[ 14 ] ) = 32;
-            LOBYTE( rayData[ 21 ] ) = 0;
+    inline __int64 is_penetrable( ubiVector4 src, ubiVector4 dst, bool debug = false, ubiVector3* out_hit = nullptr ) noexcept
+    {
+        try {
+            std::uintptr_t pw = physic_world( );
+            if ( !pw ) return 1LL;
+            __int64 r[ 29 ];
+            memset( r, 0, 0xD0ui64 );
+            LODWORD( r[ 2 ] ) = 35665087;
+            WORD2( r[ 2 ] ) = 256;
+            LOBYTE( r[ 14 ] ) = 32;
+            LOBYTE( r[ 21 ] ) = 0;
+            *( uint8_t* ) ( r + 0x15 ) = false;
 
-            *( uint8_t* ) ( rayData + 0x15 ) = false;
+            auto finish = [ & ] ( __int64 x ) -> __int64 {
+                dbg_first_hit( debug, out_hit, r );
+                ray_clean( )( &r[ 15 ] );
+                return x;
+                };
 
-            if ( !fnRayCast( physicsWorld, rayData, dst, src, &rayData[ 15 ] ) )
-            {
-                fnCleanUp( &rayData[ 15 ] );
-                return 3LL;
-            }
+            if ( !ray_cast( )( pw, r, dst, src, &r[ 15 ] ) ) return finish( 3LL );
+            uint64_t n = r[ 17 ] & 0x3FFFFFFF;
+            if ( !n ) return finish( 3LL );
+            if ( !LOBYTE( r[ 18 ] ) ) return finish( 0LL );
+            if ( n == ( uint64_t ) LOBYTE( r[ 14 ] ) ) return finish( 1LL );
 
-            const uint64_t hitCount = rayData[ 17 ] & 0x3FFFFFFF;
-            if ( !hitCount )
-            {
-                fnCleanUp( &rayData[ 15 ] );
-                return 3LL;
-            }
+            std::uintptr_t ha = static_cast< std::uintptr_t >( r[ 16 ] );
+            if ( !vp( ha ) ) return finish( 1LL );
 
-            if ( !LOBYTE( rayData[ 18 ] ) )
-            {
-                fnCleanUp( &rayData[ 15 ] );
-                return 0LL;
-            }
-
-            if ( hitCount == ( uint64_t ) LOBYTE( rayData[ 14 ] ) )
-            {
-                fnCleanUp( &rayData[ 15 ] );
-                return 1LL;
-            }
-
-            auto hitArray = rayData[ 16 ];
-            if ( !valid_pointer( ( void* ) hitArray ) )
-            {
-                fnCleanUp( &rayData[ 15 ] );
-                return 1LL;
-            }
-
-            float remainingDamage = 99999.0f;
-            __int64 result = 1LL;
-            const __int64 hitArraySize = 80LL * hitCount;
-
-            for ( __int64 offset = 0; offset < hitArraySize; offset += 80LL )
-            {
-                auto entryBase = hitArray + offset;
-                if ( !valid_pointer( ( void* ) entryBase ) || !valid_pointer( ( void* ) ( entryBase + 0x8 ) ) )
-                    continue;
-
-                auto hitObject = *reinterpret_cast< uint64_t* >( entryBase );
-                if ( !valid_pointer( ( void* ) hitObject ) || !*reinterpret_cast< _QWORD* >( hitObject ) )
-                    continue;
-
-                auto hitInfo = *reinterpret_cast< uint64_t* >( entryBase + 0x8 );
-                if ( !valid_pointer( ( void* ) hitInfo ) )
-                    continue;
-
-                auto material = *reinterpret_cast< uint64_t* >( hitInfo );
-                if ( !valid_pointer( ( void* ) material ) || !valid_pointer( ( void* ) ( material + 0x38 ) ) )
-                    continue;
-
-                auto surface = *reinterpret_cast< uint64_t* >( material + 0x38 );
-                if ( !valid_pointer( ( void* ) surface ) )
-                    continue;
-
-                auto surfaceData = *reinterpret_cast< uint64_t* >( surface );
-                if ( !valid_pointer( ( void* ) surfaceData ) )
-                    continue;
-
-                if ( !valid_pointer( ( void* ) ( surfaceData + 0x18 ) ) || !valid_pointer( ( void* ) ( surfaceData + 0x24 ) ) )
-                    continue;
-
-                const unsigned __int8 penetrationLoss = *reinterpret_cast< unsigned __int8* >( surfaceData + 0x24 );
-                if ( penetrationLoss == 255 )
-                    break;
-
-                if ( *reinterpret_cast< float* >( surfaceData + 0x18 ) >= 90.0f )
-                    break;
-
-                remainingDamage -= penetrationLoss;
-                if ( remainingDamage < 0.0f )
-                    break;
-
-                if ( offset + 80 == hitArraySize )
-                {
-                    result = 3LL;
+            float dmg = 99999.f;
+            __int64 res = 1LL;
+            const __int64 sz = 80LL * static_cast< __int64 >( n );
+            for ( __int64 o = 0; o < sz; o += 80LL ) {
+                const std::uintptr_t eb = ha + static_cast< std::uintptr_t >( o );
+                if ( !vp( eb ) || !vp( eb + 8 ) ) continue;
+                uint64_t ho = *reinterpret_cast< uint64_t* >( eb );
+                if ( !vp( ho ) || !*reinterpret_cast< uint64_t* >( ho ) ) continue;
+                uint64_t hi = *reinterpret_cast< uint64_t* >( eb + 8 );
+                if ( !vp( hi ) ) continue;
+                uint64_t mat = *reinterpret_cast< uint64_t* >( hi );
+                if ( !vp( mat ) || !vp( mat + 0x38 ) ) continue;
+                uint64_t sf = *reinterpret_cast< uint64_t* >( mat + 0x38 );
+                if ( !vp( sf ) ) continue;
+                uint64_t sd = *reinterpret_cast< uint64_t* >( sf );
+                if ( !vp( sd ) || !vp( sd + 0x18 ) || !vp( sd + 0x24 ) ) continue;
+                if ( *reinterpret_cast< uint8_t* >( sd + 0x24 ) == 255 ) break;
+                if ( *reinterpret_cast< float* >( sd + 0x18 ) >= 90.f ) break;
+                dmg -= *reinterpret_cast< uint8_t* >( sd + 0x24 );
+                if ( dmg < 0.f ) break;
+                if ( o + 80LL == sz ) {
+                    res = 3LL;
                     break;
                 }
             }
-
-            fnCleanUp( &rayData[ 15 ] );
-            return result;
+            return finish( res );
         }
-        catch ( ... )
-        {
+        catch ( ... ) {
             return 1LL;
         }
     }

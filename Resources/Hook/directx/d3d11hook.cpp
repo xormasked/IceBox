@@ -5,8 +5,8 @@
 #include "Rendering/interface.hpp"
 #include "Rendering/Render.hpp"
 #include "../../../Core/Crash Handler/crash_handler.hpp"
-#include "../../../ice/Hooks/functions/rappel_constructor.hpp"
 #include "../../../ice/IceBox.hpp"
+#include "../../../ice/UbiHookBypass/UbiHook.hpp"
 #include "../../../Core/Utils/Haru Hook/haru_hook.hpp"
 #include "../../../Core/Utils/Haru Hook/mid_hook.hpp"
 #include "../../../Resources/config.hpp"
@@ -113,6 +113,8 @@ namespace d3d11 {
 
         ImGui::NewFrame( );
 
+        IceBox::raycast_debug_hit_marker_decay( ImGui::GetIO( ).DeltaTime );
+
 #ifdef _WIN64
         static bool s_aspect_toggle_last = false;
         static bool s_run_shoot_last = false;
@@ -150,6 +152,9 @@ namespace d3d11 {
             aspect_ratio_live = visuals::AspectRatio;
 #endif
 
+        if ( round_active )
+            IceBox::raycast_closest_player_debug_tick( ImGui::GetIO( ).DeltaTime );
+
         Render::Renderables( );
 
         Render::user_interface( );
@@ -158,6 +163,8 @@ namespace d3d11 {
             IceBox::camera_fx_apply_fov( );
 
             IceBox::long_melee( visuals::LongMelee );
+
+            IceBox::third_person( visuals::ThirdPerson, ImGui::GetIO( ).DeltaTime );
         }
 
         ImGui::EndFrame( );
@@ -218,10 +225,6 @@ namespace d3d11 {
             release_hooks_and_cave( );
             return 1;
         }
-        if ( !rappel_hook::install( ) ) {
-            release_hooks_and_cave( );
-            return 1;
-        }
         if ( MH_CreateHook( reinterpret_cast< void** >( p_present_target ), &detour_present, reinterpret_cast< void** >( &p_present ) ) != MH_OK ) {
             release_hooks_and_cave( );
             return 1;
@@ -240,6 +243,7 @@ namespace d3d11 {
         }
 
         g_shutting_down = true;
+        IceBox::third_person_reset( );
         release_hooks_and_cave( );
         unhook( );
         MH_DisableHook( MH_ALL_HOOKS );

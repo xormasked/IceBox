@@ -51,17 +51,20 @@ namespace Scimitar {
     class Pawn;
     class Entity;
     class cskeleton;
+    class animationcomponent;
     class ecomponents;
     class weaponcomponent;
     class chealdweapon;
 
     using GetSkeletonComponentFn = cskeleton * ( __fastcall* )( unsigned __int8* a1, Entity* a2 );
+    using GetAnimationComponentFn = animationcomponent*( __fastcall* )( unsigned __int8* a1, Entity* a2 );
     using GetBoneFn = void( * )( cskeleton* a1, int a2, __m128* a3 );
     using CreateShotFn = __int64( __fastcall* )( __int64 Weapon_Infoa1, __m128* source, const __m128i* Direction );
     using EDSrvListFn = uintptr_t( __fastcall* )( unsigned __int8* a1, Entity* a2 );
     using ResolveComponentFn = uintptr_t( __fastcall* )( uintptr_t a1, unsigned int type_hash, int unk );
 
     inline GetSkeletonComponentFn get_skeleton_component = nullptr;
+    inline GetAnimationComponentFn get_animation_component_fn = nullptr;
     inline GetBoneFn get_bone_pos = nullptr;
     inline CreateShotFn create_shot = nullptr;
     inline EDSrvListFn ed_srv_list = nullptr;
@@ -236,6 +239,12 @@ namespace Scimitar {
         auto view_angles( ) -> ubiVector4 {
             return *reinterpret_cast< ubiVector4* >( *reinterpret_cast< uint64_t* >( this + 0x1270 ) + 0xC0 );
         }
+
+        Entity* get_camera_entity( )
+        {
+            const uintptr_t p = Memory::ReadPtr<uintptr_t>( Memory::ImageBase + 0x6806380, { 0x60, 0x60 } );
+            return reinterpret_cast< Entity* >( p );
+        }
     };
 
     class Entity {
@@ -264,6 +273,15 @@ namespace Scimitar {
             return get_skeleton_component( reinterpret_cast< unsigned __int8* >( this + 0x1CB ), this );
         }
 
+        auto get_Animation_component( ) -> animationcomponent*
+        {
+            if ( !Memory::valid_pointer( this ) || !get_animation_component_fn )
+                return nullptr;
+
+            return get_animation_component_fn(
+                reinterpret_cast< unsigned __int8* >( this + 0x1C3 ),
+                this );
+        }
 
         uintptr_t resolve_component( uint64_t hash ) noexcept
         {
@@ -280,6 +298,9 @@ namespace Scimitar {
 
     class GroundNavContext {
     public:
+    };
+
+    class animationcomponent {
     };
 
     class cskeleton {
@@ -333,6 +354,7 @@ namespace Scimitar {
     inline void init( )
     {
         get_skeleton_component = reinterpret_cast< GetSkeletonComponentFn >( Memory::ImageBase + 0xD7E9D0 );
+        get_animation_component_fn = reinterpret_cast< GetAnimationComponentFn >( Memory::ImageBase + 0xD7EF50 );
         get_bone_pos = reinterpret_cast< GetBoneFn >( Memory::ImageBase + 0x631830 );
         create_shot = reinterpret_cast< CreateShotFn >( Memory::ImageBase + 0x1C4E7B0 );
         ed_srv_list = reinterpret_cast< EDSrvListFn >( Memory::ImageBase + 0xD7EDF0 );

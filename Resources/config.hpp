@@ -11,6 +11,9 @@ namespace visuals {
 
     inline bool LongMelee = false;
 
+	inline bool ThirdPerson = false;
+
+	inline bool RaycastClosestDebug = false;
     inline bool RunAndShoot = false;
 
     inline bool AspectRatioHook = false;

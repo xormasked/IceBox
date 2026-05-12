@@ -170,7 +170,7 @@ public:
         return x == other.x && y == other.y && z == other.z;
     }
 
-    inline float Dot( const ubiVector3& vector )
+    inline float Dot( const ubiVector3& vector ) const
     {
         return x * vector.x + y * vector.y + z * vector.z;
     }
@@ -393,6 +393,61 @@ namespace havok {
             ( ( ( ( int ) ( g * 255.f ) & 0xFF ) << 8 ) ) |
             ( ( ( ( int ) ( r * 255.f ) & 0xFF ) << 16 ) ) |
             ( ( ( ( int ) ( a * 255.f ) & 0xFF ) << 24 ) );
+    }
+
+    // ease-out cubic: fast start, slow finish on each axis segment.
+    inline float ease_out_cubic( float t ) noexcept
+    {
+        t = std::clamp( t, 0.f, 1.f );
+        const float inv = 1.f - t;
+        return 1.f - inv * inv * inv;
+    }
+
+    // entering_third_person: FB eases over full duration; UD joins at stagger_midpoint with its own ease-out (overlap).
+    // !entering_third_person: UD eases over full duration; FB joins at stagger_midpoint (inverse stagger).
+    inline void slope_operator(
+        float elapsed_sec,
+        float duration_sec,
+        bool entering_third_person,
+        float stagger_midpoint,
+        float start_fb,
+        float target_fb,
+        float start_ud,
+        float target_ud,
+        float& out_fb,
+        float& out_ud ) noexcept
+    {
+        if ( duration_sec <= 1e-6f ) {
+            out_fb = target_fb;
+            out_ud = target_ud;
+            return;
+        }
+
+        stagger_midpoint = std::clamp( stagger_midpoint, 0.05f, 0.95f );
+        const float u = std::clamp( elapsed_sec / duration_sec, 0.f, 1.f );
+        const float tail = 1.f - stagger_midpoint;
+
+        if ( entering_third_person ) {
+            const float e_fb = ease_out_cubic( u );
+            out_fb = start_fb + ( target_fb - start_fb ) * e_fb;
+            if ( u < stagger_midpoint )
+                out_ud = start_ud;
+            else {
+                const float lu = tail > 1e-6f ? ( u - stagger_midpoint ) / tail : 1.f;
+                const float e_ud = ease_out_cubic( lu );
+                out_ud = start_ud + ( target_ud - start_ud ) * e_ud;
+            }
+        } else {
+            const float e_ud = ease_out_cubic( u );
+            out_ud = start_ud + ( target_ud - start_ud ) * e_ud;
+            if ( u < stagger_midpoint )
+                out_fb = start_fb;
+            else {
+                const float lu = tail > 1e-6f ? ( u - stagger_midpoint ) / tail : 1.f;
+                const float e_fb = ease_out_cubic( lu );
+                out_fb = start_fb + ( target_fb - start_fb ) * e_fb;
+            }
+        }
     }
 
 

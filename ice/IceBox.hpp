@@ -1,5 +1,9 @@
 #pragma once
 
+#include "../Core/Maths/havok_math.hpp"
+
+struct ImDrawList;
+
 namespace IceBox {
 
 	auto long_melee( bool enable ) -> void;
@@ -15,5 +19,17 @@ namespace IceBox {
 	bool run_and_shoot_install( );
 	void run_and_shoot_uninstall( );
 	bool run_and_shoot_installed( );
+
+	auto third_person( bool enable, float delta_seconds ) -> void;
+
+	void third_person_reset( );
+
+	void raycast_debug_hit_marker_decay( float delta_seconds );
+
+	bool raycast_debug_hit_marker_world( ubiVector3& out_world ) noexcept;
+
+	void raycast_closest_player_debug_tick( float delta_seconds );
+
+	void render_raycast_debug_overlay( float delta_seconds, ImDrawList* draw_list );
 
 }

@@ -1,10 +1,7 @@
 #include "../interface.hpp"
 
 #include "../../../../config.hpp"
-#include "../../../../../Core/Engine/Anvil/scimitar.hpp"
 #include "../../d3d11hook.hpp"
-
-#include <cstdio>
 
 namespace Render {
 
@@ -42,6 +39,8 @@ namespace Render {
             if ( ImGui::BeginTabItem( "Misc" ) ) {
                 ImGui::Checkbox( "Ragebot", &visuals::RageBot );
                 ImGui::Checkbox( "Long melee", &visuals::LongMelee );
+                ImGui::Checkbox( "Third person", &visuals::ThirdPerson );
+                ImGui::Checkbox( "Raycast debug (console)", &visuals::RaycastClosestDebug );
                 ImGui::Checkbox( "Run and shoot", &visuals::RunAndShoot );
                 if ( visuals::RageBot ) {
                     ImGui::Indent( );
