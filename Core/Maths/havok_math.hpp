@@ -395,7 +395,6 @@ namespace havok {
             ( ( ( ( int ) ( a * 255.f ) & 0xFF ) << 24 ) );
     }
 
-    // ease-out cubic: fast start, slow finish on each axis segment.
     inline float ease_out_cubic( float t ) noexcept
     {
         t = std::clamp( t, 0.f, 1.f );
@@ -403,8 +402,6 @@ namespace havok {
         return 1.f - inv * inv * inv;
     }
 
-    // entering_third_person: FB eases over full duration; UD joins at stagger_midpoint with its own ease-out (overlap).
-    // !entering_third_person: UD eases over full duration; FB joins at stagger_midpoint (inverse stagger).
     inline void slope_operator(
         float elapsed_sec,
         float duration_sec,
