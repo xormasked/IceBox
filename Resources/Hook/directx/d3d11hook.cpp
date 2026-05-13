@@ -22,6 +22,9 @@ present_t p_present = nullptr;
 present_t p_present_target = nullptr;
 extern LRESULT ImGui_ImplWin32_WndProcHandler( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam );
 
+static bool s_tp_key_was_down = false;
+static bool s_tp_toggled_on = false;
+
 namespace d3d11 {
 
     bool init = false;
@@ -176,17 +179,30 @@ namespace d3d11 {
 
         Render::user_interface( );
 
-        if ( round_active ) {
-            IceBox::world_modulation_monitor_game( );
+            if ( round_active ) {
+                IceBox::world_modulation_monitor_game( );
 
-            IceBox::camera_fx_apply_fov( );
+                IceBox::camera_fx_apply_fov( );
 
-            IceBox::world_modulation_apply( );
+                IceBox::world_modulation_apply( );
 
-            IceBox::long_melee( visuals::LongMelee );
+                IceBox::world_glow_apply( );
 
-            IceBox::third_person( visuals::ThirdPerson, ImGui::GetIO( ).DeltaTime );
-        }
+                IceBox::long_melee( visuals::LongMelee );
+
+                if ( !visuals::ThirdPerson ) {
+                    s_tp_key_was_down = false;
+                    s_tp_toggled_on = false;
+                    IceBox::third_person( false, ImGui::GetIO( ).DeltaTime );
+                } else {
+                    const bool key_down =
+                        ( GetAsyncKeyState( visuals::ThirdPersonVk ) & 0x8000 ) != 0;
+                    if ( key_down && !s_tp_key_was_down )
+                        s_tp_toggled_on = !s_tp_toggled_on;
+                    s_tp_key_was_down = key_down;
+                    IceBox::third_person( s_tp_toggled_on, ImGui::GetIO( ).DeltaTime );
+                }
+            }
 
         ImGui::EndFrame( );
         ImGui::Render( );
@@ -262,6 +278,8 @@ namespace d3d11 {
             }
             if ( ( GetAsyncKeyState( VK_END ) & 1 ) || should_uninject ) {
                 IceBox::world_modulation_prepare_uninject( );
+                IceBox::world_glow_prepare_uninject( );
+                IceBox::camera_fx_prepare_uninject( );
                 break;
             }
         }

@@ -47,13 +47,21 @@ namespace AnvilNextLightingEngine {
 		LCHighlight2Blue = 0x26C,
 	};
 
-	/*
-	
-			uint64_t Base = Memory::ImageBase + 0x5E1F4B8;
-		std::vector< uintptr_t > Chain = { 0x10, 0x408, 0x230 };
-		return Memory::ReadPtr< uint6_t >( Base, Chain );
-		
-		*/
+	enum WorldComponentGlow : uint32_t {
+		WCGlowRed = 0xD0,
+		WCGlowGreen = 0xD4,
+		WCGlowBlue = 0xD8,
+		WCGlowEndDistance = 0x110,
+		WCGlowStartDistance = 0x114,
+		WCGlowDensity = 0x118,
+	};
+
+	inline uintptr_t get_world_glow_component( WorldComponentGlow id ) noexcept {
+		uintptr_t component = Memory::Read< uintptr_t >( Memory::ImageBase + 0x05E07858 );
+		component = Memory::Read< uintptr_t >( component + 0xB8 );
+
+		return component + id;
+	}
 
 	inline uintptr_t get_lighting_component( LightingComponent id ) noexcept
 	{

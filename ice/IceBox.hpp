@@ -12,6 +12,8 @@ namespace IceBox {
 
 	auto camera_fx_apply_fov( ) -> void;
 
+	auto camera_fx_prepare_uninject( ) -> void;
+
 	auto world_modulation_monitor_game( ) -> void;
 
 	auto world_modulation_apply( ) -> void;
@@ -21,6 +23,10 @@ namespace IceBox {
 	bool world_modulation_values_differ_from_frozen_snapshot( ) noexcept;
 
 	void world_modulation_reset_all_to_frozen_snapshot( ) noexcept;
+
+	auto world_glow_apply( ) -> void;
+
+	auto world_glow_prepare_uninject( ) -> void;
 
 	bool aspect_ratio_install( );
 	void aspect_ratio_uninstall( );

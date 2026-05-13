@@ -12,6 +12,7 @@ namespace visuals {
     inline bool LongMelee = false;
 
 	inline bool ThirdPerson = false;
+    inline int ThirdPersonVk = 'V';
 
     inline bool RaycastClosestDebug = false;
     inline bool RunAndShoot = false;
@@ -57,6 +58,10 @@ namespace globals {
 
 namespace world_modulation {
     inline bool enabled = false;
+
+    inline bool player_glow_enabled = false;
+    inline int player_glow_type = 0;
+    inline ImVec4 player_glow_rgb = { 0.f, 0.f, 0.f, 1.f };
 
     inline bool edit_light = true;
     inline bool edit_reflection = true;

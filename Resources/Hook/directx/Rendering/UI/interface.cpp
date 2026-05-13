@@ -8,9 +8,7 @@
 #include <Windows.h>
 
 #include <cstdio>
-#include <iostream>
 
-#include "../../../../../Core/Engine/Anvil/AnvilNext LightingEngine/R6LightEngine.hpp"
 #include "../../../../../ice/IceBox.hpp"
 
 namespace Render {
@@ -117,53 +115,90 @@ namespace Render {
             Scimitar::add_dust( pos, visuals::DustSpawnRadius, col );
         }
 
-        struct LightingCmpRow {
-            const char* name;
-            AnvilNextLightingEngine::LightingComponent id;
-        };
-
-        void print_all_lighting_addresses( )
+        void apply_menu_theme_once( ) noexcept
         {
-            namespace ANLE = AnvilNextLightingEngine;
-            static const LightingCmpRow k_rows[] = {
-                { "LCLightBlue", ANLE::LCLightBlue },
-                { "LCLightGreen", ANLE::LCLightGreen },
-                { "LCLightRed", ANLE::LCLightRed },
-                { "LCLightRotation", ANLE::LCLightRotation },
-                { "LCLightPower", ANLE::LCLightPower },
-                { "LCReflectionRed", ANLE::LCReflectionRed },
-                { "LCReflectionGreen", ANLE::LCReflectionGreen },
-                { "LCReflectionBlue", ANLE::LCReflectionBlue },
-                { "LCHighlightRed", ANLE::LCHighlightRed },
-                { "LCHighlightGreen", ANLE::LCHighlightGreen },
-                { "LCHighlightBlue", ANLE::LCHighlightBlue },
-                { "LCTopBottomRed", ANLE::LCTopBottomRed },
-                { "LCTopBottomGreen", ANLE::LCTopBottomGreen },
-                { "LCTopBottomBlue", ANLE::LCTopBottomBlue },
-                { "LCGlobalEluminationRed", ANLE::LCGlobalEluminationRed },
-                { "LCGlobalEluminationGreen", ANLE::LCGlobalEluminationGreen },
-                { "LCGlobalEluminationBlue", ANLE::LCGlobalEluminationBlue },
-                { "LCMagicRRB", ANLE::LCMagicRRB },
-                { "LCMagicGGP", ANLE::LCMagicGGP },
-                { "LCMagicBYB", ANLE::LCMagicBYB },
-                { "LCTopBottomFogRed", ANLE::LCTopBottomFogRed },
-                { "LCTopBottomFogGreen", ANLE::LCTopBottomFogGreen },
-                { "LCTopBottomFogBlue", ANLE::LCTopBottomFogBlue },
-                { "LCSkyColorRed", ANLE::LCSkyColorRed },
-                { "LCSkyColorGreen", ANLE::LCSkyColorGreen },
-                { "LCSkyColorBlue", ANLE::LCSkyColorBlue },
-                { "LCHighlight2Red", ANLE::LCHighlight2Red },
-                { "LCHighlight2Green", ANLE::LCHighlight2Green },
-                { "LCHighlight2Blue", ANLE::LCHighlight2Blue },
-            };
+            static bool s_applied = false;
+            if ( s_applied )
+                return;
+            s_applied = true;
 
-            std::cout << "[Lighting] all get_lighting_component addresses:\n";
-            for ( const auto& row : k_rows ) {
-                const uintptr_t addr = ANLE::get_lighting_component( row.id );
-                std::cout << "  " << row.name << " (off 0x" << std::hex
-                          << static_cast< uint32_t >( row.id ) << ") -> 0x" << addr << std::dec << '\n';
-            }
-            std::cout << std::flush;
+            ImGui::StyleColorsDark( );
+
+            ImGuiStyle& st = ImGui::GetStyle( );
+            st.WindowRounding = 5.f;
+            st.FrameRounding = 4.f;
+            st.GrabRounding = 3.f;
+            st.TabRounding = 4.f;
+            st.ScrollbarSize = 12.f;
+            st.WindowPadding = ImVec2( 12.f, 12.f );
+            st.FramePadding = ImVec2( 8.f, 4.f );
+            st.ItemSpacing = ImVec2( 8.f, 6.f );
+
+            ImVec4* c = st.Colors;
+            const ImVec4 txt( 0.90f, 0.90f, 0.90f, 1.f );
+            const ImVec4 txt_dim( 0.45f, 0.45f, 0.45f, 1.f );
+            const ImVec4 blk( 0.06f, 0.06f, 0.06f, 0.98f );
+            const ImVec4 gray_bg( 0.14f, 0.14f, 0.14f, 1.f );
+            const ImVec4 gray_frame( 0.18f, 0.18f, 0.18f, 1.f );
+            const ImVec4 gray_hi( 0.28f, 0.28f, 0.28f, 1.f );
+            const ImVec4 red( 0.72f, 0.14f, 0.14f, 1.f );
+            const ImVec4 red_hi( 0.88f, 0.22f, 0.22f, 1.f );
+            const ImVec4 red_active( 1.f, 0.32f, 0.28f, 1.f );
+            const ImVec4 red_tabs( 0.42f, 0.10f, 0.10f, 1.f );
+
+            c[ ImGuiCol_Text ] = txt;
+            c[ ImGuiCol_TextDisabled ] = txt_dim;
+            c[ ImGuiCol_WindowBg ] = blk;
+            c[ ImGuiCol_ChildBg ] = gray_bg;
+            c[ ImGuiCol_PopupBg ] = ImVec4( 0.10f, 0.10f, 0.10f, 0.98f );
+            c[ ImGuiCol_Border ] = ImVec4( 0.38f, 0.22f, 0.22f, 0.55f );
+            c[ ImGuiCol_BorderShadow ] = ImVec4( 0.f, 0.f, 0.f, 0.f );
+            c[ ImGuiCol_FrameBg ] = gray_frame;
+            c[ ImGuiCol_FrameBgHovered ] = ImVec4( 0.32f, 0.18f, 0.18f, 1.f );
+            c[ ImGuiCol_FrameBgActive ] = ImVec4( 0.40f, 0.14f, 0.14f, 1.f );
+            c[ ImGuiCol_TitleBg ] = ImVec4( 0.08f, 0.08f, 0.08f, 1.f );
+            c[ ImGuiCol_TitleBgActive ] = red_tabs;
+            c[ ImGuiCol_TitleBgCollapsed ] = ImVec4( 0.08f, 0.08f, 0.08f, 0.85f );
+            c[ ImGuiCol_MenuBarBg ] = gray_bg;
+            c[ ImGuiCol_ScrollbarBg ] = blk;
+            c[ ImGuiCol_ScrollbarGrab ] = gray_hi;
+            c[ ImGuiCol_ScrollbarGrabHovered ] = red_hi;
+            c[ ImGuiCol_ScrollbarGrabActive ] = red_active;
+            c[ ImGuiCol_CheckMark ] = red_hi;
+            c[ ImGuiCol_SliderGrab ] = red;
+            c[ ImGuiCol_SliderGrabActive ] = red_active;
+            c[ ImGuiCol_Button ] = gray_hi;
+            c[ ImGuiCol_ButtonHovered ] = red;
+            c[ ImGuiCol_ButtonActive ] = red_active;
+            c[ ImGuiCol_Header ] = ImVec4( 0.35f, 0.14f, 0.14f, 0.65f );
+            c[ ImGuiCol_HeaderHovered ] = ImVec4( 0.55f, 0.16f, 0.16f, 1.f );
+            c[ ImGuiCol_HeaderActive ] = red_tabs;
+            c[ ImGuiCol_Separator ] = ImVec4( 0.35f, 0.35f, 0.35f, 0.55f );
+            c[ ImGuiCol_SeparatorHovered ] = red_hi;
+            c[ ImGuiCol_SeparatorActive ] = red_active;
+            c[ ImGuiCol_ResizeGrip ] = ImVec4( 0.5f, 0.15f, 0.15f, 0.35f );
+            c[ ImGuiCol_ResizeGripHovered ] = ImVec4( 0.75f, 0.2f, 0.2f, 0.65f );
+            c[ ImGuiCol_ResizeGripActive ] = red_active;
+            c[ ImGuiCol_Tab ] = ImVec4( 0.16f, 0.16f, 0.16f, 1.f );
+            c[ ImGuiCol_TabHovered ] = ImVec4( 0.55f, 0.18f, 0.18f, 1.f );
+            c[ ImGuiCol_TabActive ] = red_tabs;
+            c[ ImGuiCol_TabUnfocused ] = ImVec4( 0.12f, 0.12f, 0.12f, 1.f );
+            c[ ImGuiCol_TabUnfocusedActive ] = ImVec4( 0.32f, 0.12f, 0.12f, 1.f );
+            c[ ImGuiCol_PlotLines ] = red_hi;
+            c[ ImGuiCol_PlotLinesHovered ] = red_active;
+            c[ ImGuiCol_PlotHistogram ] = red;
+            c[ ImGuiCol_PlotHistogramHovered ] = red_hi;
+            c[ ImGuiCol_TableHeaderBg ] = ImVec4( 0.12f, 0.12f, 0.12f, 1.f );
+            c[ ImGuiCol_TableBorderStrong ] = ImVec4( 0.35f, 0.22f, 0.22f, 1.f );
+            c[ ImGuiCol_TableBorderLight ] = ImVec4( 0.28f, 0.28f, 0.28f, 0.55f );
+            c[ ImGuiCol_TableRowBg ] = ImVec4( 0.f, 0.f, 0.f, 0.f );
+            c[ ImGuiCol_TableRowBgAlt ] = ImVec4( 1.f, 1.f, 1.f, 0.03f );
+            c[ ImGuiCol_TextSelectedBg ] = ImVec4( 0.65f, 0.15f, 0.15f, 0.55f );
+            c[ ImGuiCol_DragDropTarget ] = ImVec4( 0.9f, 0.25f, 0.25f, 0.95f );
+            c[ ImGuiCol_NavHighlight ] = ImVec4( 0.85f, 0.25f, 0.25f, 0.8f );
+            c[ ImGuiCol_NavWindowingHighlight ] = ImVec4( 1.f, 0.35f, 0.35f, 0.75f );
+            c[ ImGuiCol_NavWindowingDimBg ] = ImVec4( 0.f, 0.f, 0.f, 0.55f );
+            c[ ImGuiCol_ModalWindowDimBg ] = ImVec4( 0.f, 0.f, 0.f, 0.62f );
         }
 
     } // namespace
@@ -172,7 +207,9 @@ namespace Render {
     {
         if ( !menu_open ) return;
 
-        ImGui::SetNextWindowSize( ImVec2( 700, 520 ), ImGuiCond_FirstUseEver );
+        apply_menu_theme_once( );
+
+        ImGui::SetNextWindowSize( ImVec2( 480.f, 680.f ), ImGuiCond_FirstUseEver );
         ImGui::Begin( "IceBox Public", nullptr, ImGuiWindowFlags_NoCollapse );
 
         if ( ImGui::BeginTabBar( "MainTabs" ) ) {
@@ -351,6 +388,20 @@ namespace Render {
                     }
                 }
 
+                ImGui::Separator( );
+                ImGui::TextUnformatted( "Player glow modulation" );
+                ImGui::Checkbox( "Enable##player_glow", &world_modulation::player_glow_enabled );
+                if ( world_modulation::player_glow_enabled ) {
+                    const char* player_glow_type_labels[ ] = { "Solid", "Outline" };
+                    ImGui::SetNextItemWidth( 200.f );
+                    ImGui::Combo( "Glow type",
+                                  &world_modulation::player_glow_type,
+                                  player_glow_type_labels,
+                                  IM_ARRAYSIZE( player_glow_type_labels ) );
+                    ImGui::SetNextItemWidth( -FLT_MIN );
+                    ImGui::ColorEdit3( "Color##player_glow_rgb", &world_modulation::player_glow_rgb.x, wf_pick );
+                }
+
                 ImGui::EndTabItem( );
             }
 
@@ -358,6 +409,65 @@ namespace Render {
                 ImGui::Checkbox( "Ragebot", &visuals::RageBot );
                 ImGui::Checkbox( "Long melee", &visuals::LongMelee );
                 ImGui::Checkbox( "Third person", &visuals::ThirdPerson );
+
+                static bool s_third_person_listen = false;
+                static double s_third_person_listen_after = 0.0;
+                static bool s_third_person_wait_mouse_release = false;
+                if ( !visuals::ThirdPerson ) {
+                    s_third_person_listen = false;
+                    s_third_person_wait_mouse_release = false;
+                }
+
+                if ( visuals::ThirdPerson ) {
+                    ImGui::Indent( );
+
+                    char tp_vk_buf[ 64 ];
+                    const char* tp_vk_text = jitter_peek_vk_label( visuals::ThirdPersonVk, tp_vk_buf );
+
+                    const char* tp_btn_label = s_third_person_listen ? "" : tp_vk_text;
+                    const ImVec2 tp_hotkey_btn_size( 76.f, 22.f );
+
+                    ImGui::PushID( "ThirdPersonHotkey" );
+                    ImGui::PushStyleColor( ImGuiCol_Button, ImVec4( 0.40f, 0.40f, 0.43f, 1.00f ) );
+                    ImGui::PushStyleColor( ImGuiCol_ButtonHovered, ImVec4( 0.48f, 0.48f, 0.51f, 1.00f ) );
+                    ImGui::PushStyleColor( ImGuiCol_ButtonActive, ImVec4( 0.34f, 0.34f, 0.37f, 1.00f ) );
+                    ImGui::PushStyleColor( ImGuiCol_Text, ImVec4( 0.90f, 0.90f, 0.92f, 1.00f ) );
+                    if ( ImGui::Button( tp_btn_label, tp_hotkey_btn_size ) ) {
+                        s_third_person_listen = true;
+                        s_third_person_listen_after = ImGui::GetTime( ) + 0.18;
+                        s_third_person_wait_mouse_release = true;
+                    }
+                    ImGui::PopStyleColor( 4 );
+                    ImGui::PopID( );
+
+                    if ( s_third_person_listen ) {
+                        const double now_tp = ImGui::GetTime( );
+                        if ( now_tp >= s_third_person_listen_after ) {
+                            if ( ( GetAsyncKeyState( VK_ESCAPE ) & 0x8000 ) != 0 ) {
+                                s_third_person_listen = false;
+                                s_third_person_wait_mouse_release = false;
+                            } else {
+                                if ( s_third_person_wait_mouse_release ) {
+                                    if ( !jitter_peek_any_mouse_down( ) )
+                                        s_third_person_wait_mouse_release = false;
+                                }
+
+                                if ( !s_third_person_wait_mouse_release ) {
+                                    for ( int vk = 1; vk < 256; ++vk ) {
+                                        if ( ( GetAsyncKeyState( vk ) & 0x8000 ) != 0 ) {
+                                            visuals::ThirdPersonVk = vk;
+                                            s_third_person_listen = false;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    ImGui::Unindent( );
+                }
+
                 ImGui::Checkbox( "Raycast debug (console)", &visuals::RaycastClosestDebug );
                 ImGui::Checkbox( "Run and shoot", &visuals::RunAndShoot );
                 ImGui::Checkbox( "Unlock all", &visuals::UnlockAllMidHook );
@@ -433,20 +543,11 @@ namespace Render {
                 ImGui::Separator( );
                 ImGui::TextUnformatted( "Dust" );
                 ImGui::SliderFloat( "Dust radius", &visuals::DustSpawnRadius, 0.25f, 15.f, "%.2f" );
-                ImGui::ColorEdit4( "Dust color", &visuals::DustSpawnColor.x,
-                                     ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_InputRGB );
+                constexpr ImGuiColorEditFlags dust_pick =
+                    ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_InputRGB | ImGuiColorEditFlags_DisplayRGB;
+                ImGui::ColorEdit4( "Dust color", &visuals::DustSpawnColor.x, dust_pick );
                 if ( ImGui::Button( "Spawn dust (local origin)", ImVec2( 220.f, 0.f ) ) )
                     spawn_dust_at_local_origin( );
-
-                ImGui::Separator( );
-                if ( ImGui::Button( "Print lighting component address", ImVec2( 220.f, 0.f ) ) ) {
-                    const uintptr_t addr =
-                        AnvilNextLightingEngine::get_lighting_component( AnvilNextLightingEngine::LCMagicRRB );
-                    std::cout << "[Lighting] get_lighting_component -> 0x" << std::hex << addr << std::dec << std::endl;
-                }
-
-                if ( ImGui::Button( "Print all lighting component addresses", ImVec2( 220.f, 0.f ) ) )
-                    print_all_lighting_addresses( );
 
                 ImGui::Separator( );
                 ImGui::EndTabItem( );
