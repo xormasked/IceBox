@@ -7,7 +7,7 @@
 #include "../../../../ice/IceBox.hpp"
 #include "../../../../Resources/config.hpp"
 
-#include "../../../External/ImGui/imgui.h"
+#include <imgui/imgui.h>
 
 #include <cmath>
 

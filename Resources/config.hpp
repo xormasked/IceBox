@@ -2,7 +2,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-#include "External/ImGui/imgui.h"
+#include <imgui/imgui.h>
 
 namespace visuals {
     inline bool RageBot = false;

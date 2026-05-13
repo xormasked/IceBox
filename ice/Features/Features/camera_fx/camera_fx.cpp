@@ -10,7 +10,7 @@ namespace {
 	static float s_baseline_vm_fov_rad = 0.f;
 	static bool s_have_fov_baseline = false;
 
-} // namespace
+} // namespac
 
 auto IceBox::camera_fx_apply_fov( ) -> void
 {

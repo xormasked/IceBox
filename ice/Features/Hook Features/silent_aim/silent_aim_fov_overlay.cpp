@@ -2,7 +2,7 @@
 
 #include "../../../../Core/Maths/havok_math.hpp"
 #include "../../../../Resources/config.hpp"
-#include "../../../../Resources/External/ImGui/imgui.h"
+#include <imgui/imgui.h>
 
 void IceBox::render_silent_aim_fov_overlay( ImDrawList* dl ) noexcept
 {

@@ -96,7 +96,8 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)Resources\calamari-ui;$(SolutionDir)Resources\calamari-ui\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -111,7 +112,8 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)Resources\calamari-ui;$(SolutionDir)Resources\calamari-ui\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -126,7 +128,8 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)Resources\calamari-ui;$(SolutionDir)Resources\calamari-ui\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -141,7 +144,8 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)Resources\calamari-ui;$(SolutionDir)Resources\calamari-ui\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -170,13 +174,29 @@
     <ClCompile Include="ice\Features\Hook Features\silent_aim\silent_aim.cpp" />
     <ClCompile Include="ice\Features\Hook Features\silent_aim\silent_aim_fov_overlay.cpp" />
     <ClCompile Include="Resources\dllmain.cpp" />
-    <ClCompile Include="Resources\External\ImGui\imgui.cpp" />
-    <ClCompile Include="Resources\External\ImGui\imgui_demo.cpp" />
-    <ClCompile Include="Resources\External\ImGui\imgui_draw.cpp" />
-    <ClCompile Include="Resources\External\ImGui\imgui_impl_dx11.cpp" />
-    <ClCompile Include="Resources\External\ImGui\imgui_impl_win32.cpp" />
-    <ClCompile Include="Resources\External\ImGui\imgui_tables.cpp" />
-    <ClCompile Include="Resources\External\ImGui\imgui_widgets.cpp" />
+    <ClCompile Include="Resources\calamari-ui\core\drawing\fonts\fonts.cpp" />
+    <ClCompile Include="Resources\calamari-ui\core\drawing\framework\framework.cpp" />
+    <ClCompile Include="Resources\calamari-ui\core\drawing\menu\childs\child_manager.cpp" />
+    <ClCompile Include="Resources\calamari-ui\core\drawing\menu\colors\color_picker.cpp" />
+    <ClCompile Include="Resources\calamari-ui\core\drawing\menu\components\component_builder.cpp" />
+    <ClCompile Include="Resources\calamari-ui\core\drawing\menu\help\help_manager.cpp" />
+    <ClCompile Include="Resources\calamari-ui\core\drawing\menu\pop ups\popup_manager.cpp" />
+    <ClCompile Include="Resources\calamari-ui\core\drawing\menu\search\search_manager.cpp" />
+    <ClCompile Include="Resources\calamari-ui\core\drawing\menu\tabs\tabs_manager.cpp" />
+    <ClCompile Include="Resources\calamari-ui\core\drawing\menu\tooltips\tooltip_manager.cpp" />
+    <ClCompile Include="Resources\calamari-ui\core\drawing\menu\widgets\widgets_manager.cpp" />
+    <ClCompile Include="Resources\calamari-ui\core\drawing\sprites\sprites.cpp" />
+    <ClCompile Include="Resources\calamari-ui\core\drawing\textures\textures.cpp" />
+    <ClCompile Include="Resources\calamari-ui\core\imgui\imgui.cpp" />
+    <ClCompile Include="Resources\calamari-ui\core\imgui\imgui_draw.cpp" />
+    <ClCompile Include="Resources\calamari-ui\core\imgui\imgui_impl_dx11.cpp" />
+    <ClCompile Include="Resources\calamari-ui\core\imgui\imgui_impl_win32.cpp" />
+    <ClCompile Include="Resources\calamari-ui\core\imgui\imgui_tables.cpp" />
+    <ClCompile Include="Resources\calamari-ui\core\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="Resources\calamari-ui\core\menu\menu.cpp" />
+    <ClCompile Include="Resources\calamari-ui\core\vars\color\color.cpp" />
+    <ClCompile Include="Resources\calamari-ui\core\vars\option\option.cpp" />
+    <ClCompile Include="Resources\calamari-ui\core\vars\vars.cpp" />
     <ClCompile Include="ice\Features\Features\camera_fx\camera_fx.cpp" />
     <ClCompile Include="ice\Features\Features\world_modulation\world_modulation.cpp" />
     <ClCompile Include="ice\Features\Features\enemy_outlines\enemy_outlines.cpp" />
@@ -188,8 +208,6 @@
     <ClCompile Include="Resources\Hook\directx\d3d11hook.cpp" />
     <ClCompile Include="Resources\Hook\directx\Rendering\Render.cpp" />
     <ClCompile Include="Resources\Hook\directx\Rendering\UI\interface.cpp" />
-    <ClCompile Include="Resources\Hook\directx\Rendering\UI\menu_design_functions.cpp" />
-    <ClCompile Include="Resources\Hook\directx\Rendering\UI\menu_others.cpp" />
     <MASM Include="ice\Features\Hook Features\aspect_ratio\aspect_ratio_stub.asm" Condition="'$(Platform)'=='x64'" />
     <MASM Include="ice\Features\Hook Features\better_light\better_light_stub.asm" Condition="'$(Platform)'=='x64'" />
     <MASM Include="ice\Features\Hook Features\run_and_shoot\run_and_shoot_stub.asm" Condition="'$(Platform)'=='x64'" />
@@ -224,20 +242,18 @@
     <ClInclude Include="Core\Utils\xorstr.hpp" />
     <ClInclude Include="ice\IceBox.hpp" />
     <ClInclude Include="ice\UbiHookBypass\UbiHook.hpp" />
+    <ClInclude Include="Resources\calamari-ui\core\drawing\watermark.hpp" />
     <ClInclude Include="Resources\config.hpp" />
     <ClInclude Include="Resources\Hook\directx\d3d11hook.hpp" />
     <ClInclude Include="Resources\Hook\directx\Rendering\interface.hpp" />
-    <ClInclude Include="Resources\Hook\directx\Rendering\UI\menu_design_functions.hpp" />
-    <ClInclude Include="Resources\Hook\directx\Rendering\UI\menu_others.hpp" />
     <ClInclude Include="Resources\Hook\directx\Rendering\Render.hpp" />
-    <ClInclude Include="Resources\External\ImGui\imconfig.h" />
-    <ClInclude Include="Resources\External\ImGui\imgui.h" />
-    <ClInclude Include="Resources\External\ImGui\imgui_impl_dx11.h" />
-    <ClInclude Include="Resources\External\ImGui\imgui_impl_win32.h" />
-    <ClInclude Include="Resources\External\ImGui\imgui_internal.h" />
-    <ClInclude Include="Resources\External\ImGui\imstb_rectpack.h" />
-    <ClInclude Include="Resources\External\ImGui\imstb_textedit.h" />
-    <ClInclude Include="Resources\External\ImGui\imstb_truetype.h" />
+    <ClInclude Include="Resources\calamari-ui\impl\includes.hpp" />
+    <ClInclude Include="Resources\calamari-ui\impl\hook_bridge.hpp" />
+    <ClInclude Include="Resources\calamari-ui\core\imgui\imconfig.h" />
+    <ClInclude Include="Resources\calamari-ui\core\imgui\imgui.h" />
+    <ClInclude Include="Resources\calamari-ui\core\imgui\imgui_impl_dx11.h" />
+    <ClInclude Include="Resources\calamari-ui\core\imgui\imgui_impl_win32.h" />
+    <ClInclude Include="Resources\calamari-ui\core\imgui\imgui_internal.h" />
     <ClInclude Include="Resources\External\MinHook\MinHook.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

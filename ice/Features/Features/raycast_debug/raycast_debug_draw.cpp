@@ -1,7 +1,7 @@
 #include "../../../IceBox.hpp"
 #include "../../../../Core/Engine/Anvil/PRender/W2S.hpp"
 #include "../../../../Resources/config.hpp"
-#include "../../../../Resources/External/ImGui/imgui.h"
+#include <imgui/imgui.h>
 
 #include <cmath>
 

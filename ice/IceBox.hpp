@@ -9,6 +9,8 @@ namespace IceBox {
 
 	auto long_melee( bool enable ) -> void;
 
+	void long_melee_prepare_uninject( ) noexcept;
+
 	auto rage_bot_run( bool enable ) -> void;
 
 	auto camera_fx_apply_fov( ) -> void;

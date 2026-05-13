@@ -14,6 +14,8 @@
 #include <atomic>
 #include <iostream>
 
+#include <impl/hook_bridge.hpp>
+
 #ifdef _WIN64
 extern "C" float aspect_ratio_live;
 #endif
@@ -77,6 +79,36 @@ namespace d3d11 {
 	ID3D11RenderTargetView* mainRenderTargetView = NULL;
 	WNDPROC oWndProc = nullptr;
 
+	static void teardown_imgui_on_present_thread_if_requested( )
+	{
+		if ( !g_imgui_teardown_requested.exchange( false ) )
+			return;
+
+		if ( !init ) {
+			g_imgui_teardown_completed.store( true, std::memory_order_release );
+			return;
+		}
+
+		if ( window && oWndProc ) {
+			SetWindowLongPtr( window, GWLP_WNDPROC, ( LONG_PTR ) oWndProc );
+			oWndProc = nullptr;
+		}
+
+		ImGui_ImplDX11_Shutdown( );
+		ImGui_ImplWin32_Shutdown( );
+		ImGui::DestroyContext( );
+
+		hook_bridge::clear_hook_font_refs_after_imgui_destroy( );
+
+		if ( mainRenderTargetView ) {
+			mainRenderTargetView->Release( );
+			mainRenderTargetView = NULL;
+		}
+
+		init = false;
+		g_imgui_teardown_completed.store( true, std::memory_order_release );
+	}
+
 	auto get_present_pointer( ) -> bool
 	{
 		DXGI_SWAP_CHAIN_DESC sd{};
@@ -106,7 +138,7 @@ namespace d3d11 {
 
 	auto __stdcall WndProc( const HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam ) -> LRESULT
 	{
-		if ( !g_shutting_down && Render::menu_open &&
+		if ( !g_shutting_down && init && Render::menu_open &&
 			ImGui_ImplWin32_WndProcHandler( hWnd, uMsg, wParam, lParam ) )
 			return true;
 		return CallWindowProc( oWndProc, hWnd, uMsg, wParam, lParam );
@@ -114,17 +146,23 @@ namespace d3d11 {
 
 	static long __stdcall detour_present( IDXGISwapChain* p_swap_chain, UINT sync_interval, UINT flags )
 	{
+		teardown_imgui_on_present_thread_if_requested( );
+
 		if ( g_shutting_down )
 			return p_present( p_swap_chain, sync_interval, flags );
 
 		if ( s_visual_restore_pending.exchange( false ) ) {
 			IceBox::third_person_reset( );
 			IceBox::camera_fx_prepare_uninject( );
+			IceBox::long_melee_prepare_uninject( );
 			g_shutting_down = true;
 			return p_present( p_swap_chain, sync_interval, flags );
 		}
 
 		if ( !init ) {
+			if ( g_block_imgui_init.load( std::memory_order_acquire ) )
+				return p_present( p_swap_chain, sync_interval, flags );
+
 			if ( !SUCCEEDED( p_swap_chain->GetDevice( __uuidof( ID3D11Device ), ( void** ) &p_device ) ) )
 				return p_present( p_swap_chain, sync_interval, flags );
 			p_device->GetImmediateContext( &p_context );
@@ -143,6 +181,7 @@ namespace d3d11 {
 			ImGui::GetIO( ).ConfigFlags = ImGuiConfigFlags_NoMouseCursorChange;
 			ImGui_ImplWin32_Init( window );
 			ImGui_ImplDX11_Init( p_device, p_context );
+			g_imgui_teardown_completed.store( false, std::memory_order_release );
 			init = true;
 		}
 
@@ -175,18 +214,14 @@ namespace d3d11 {
 		static bool s_better_light_last = false;
 
 		if ( !round_active ) {
-			IceBox::aspect_ratio_uninstall( );
 			IceBox::run_and_shoot_uninstall( );
 			IceBox::world_edit_uninstall( );
 			IceBox::better_light_uninstall( );
-			s_aspect_toggle_last = visuals::AspectRatioHook;
 			s_run_shoot_last = visuals::RunAndShoot;
 			s_world_edit_last = world_edit::enabled;
 			s_better_light_last = visuals::BetterLight;
 		}
 		else {
-			sync_install_toggle( visuals::AspectRatioHook, s_aspect_toggle_last, IceBox::aspect_ratio_install,
-				IceBox::aspect_ratio_uninstall, IceBox::aspect_ratio_installed );
 			sync_install_toggle( visuals::RunAndShoot, s_run_shoot_last, IceBox::run_and_shoot_install,
 				IceBox::run_and_shoot_uninstall, IceBox::run_and_shoot_installed );
 			sync_install_toggle( world_edit::enabled, s_world_edit_last, IceBox::world_edit_install,
@@ -194,6 +229,9 @@ namespace d3d11 {
 			sync_install_toggle( visuals::BetterLight, s_better_light_last, IceBox::better_light_install,
 				IceBox::better_light_uninstall, IceBox::better_light_installed );
 		}
+
+		sync_install_toggle( visuals::AspectRatioHook, s_aspect_toggle_last, IceBox::aspect_ratio_install,
+			IceBox::aspect_ratio_uninstall, IceBox::aspect_ratio_installed );
 
 		sync_install_toggle( visuals::UnlockAllMidHook, s_unlock_all_last, IceBox::unlock_all_install,
 			IceBox::unlock_all_uninstall, IceBox::unlock_all_installed );
@@ -206,7 +244,7 @@ namespace d3d11 {
 
 		IceBox::silent_aim_tick( );
 
-		if ( round_active && visuals::AspectRatioHook && IceBox::aspect_ratio_installed( ) )
+		if ( visuals::AspectRatioHook && IceBox::aspect_ratio_installed( ) )
 			aspect_ratio_live = visuals::AspectRatio;
 #endif
 
@@ -298,6 +336,11 @@ namespace d3d11 {
 			if ( GetAsyncKeyState( VK_INSERT ) & 1 )
 				Render::menu_open = !Render::menu_open;
 			if ( ( GetAsyncKeyState( VK_END ) & 1 ) || should_uninject ) {
+				g_block_imgui_init.store( true, std::memory_order_release );
+				g_imgui_teardown_requested.store( true, std::memory_order_release );
+				for ( int i = 0; i < 500 && !g_imgui_teardown_completed.load( std::memory_order_acquire ); ++i )
+					Sleep( 10 );
+
 				s_visual_restore_pending.store( true );
 				for ( int i = 0; i < 500 && !g_shutting_down; ++i )
 					Sleep( 10 );
@@ -312,6 +355,7 @@ namespace d3d11 {
 				IceBox::better_light_prepare_uninject( );
 				IceBox::world_glow_prepare_uninject( );
 				IceBox::no_recoil_prepare_uninject( );
+				IceBox::long_melee_prepare_uninject( );
 				IceBox::silent_aim_prepare_uninject( );
 				break;
 			}
@@ -323,10 +367,6 @@ namespace d3d11 {
 		MH_DisableHook( MH_ALL_HOOKS );
 		Sleep( 500 );
 		MH_Uninitialize( );
-
-		ImGui_ImplDX11_Shutdown( );
-		ImGui_ImplWin32_Shutdown( );
-		ImGui::DestroyContext( );
 
 		if ( mainRenderTargetView ) {
 			mainRenderTargetView->Release( );
@@ -340,8 +380,6 @@ namespace d3d11 {
 			p_device->Release( );
 			p_device = NULL;
 		}
-		if ( window && oWndProc )
-			SetWindowLongPtr( window, GWLP_WNDPROC, ( LONG_PTR ) oWndProc );
 
 		Sleep( 100 );
 		CreateThread( nullptr, 0, EjectThread, dll_handle, 0, nullptr );
