@@ -240,7 +240,6 @@ namespace Render {
                 ImGui::ColorEdit4( "##EnemyOutlineCol", &visuals::EnemyOutlineColor.x, kMenuColorRgba );
                 ImGui::Checkbox( "Aspect ratio (camera +0x128)", &visuals::AspectRatioHook );
                 ImGui::SliderFloat( "Aspect ratio", &visuals::AspectRatio, 0.1f, 2.0f, "%.2f" );
-                ImGui::Checkbox( "Better light", &visuals::BetterLight );
                 ImGui::Separator( );
                 ImGui::Checkbox( "Fov", &visuals::FovEnabled );
                 ImGui::BeginDisabled( !visuals::FovEnabled );
@@ -282,6 +281,8 @@ namespace Render {
                     if ( ImGui::SmallButton( "Reset to game##wm_rst" ) )
                         IceBox::world_modulation_reset_all_to_frozen_snapshot( );
                 }
+
+                ImGui::Checkbox( "Better light", &visuals::BetterLight );
 
                 if ( world_modulation::enabled ) {
                     ImGui::Spacing( );
