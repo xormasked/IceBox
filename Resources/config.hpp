@@ -94,6 +94,14 @@ namespace world_modulation {
     inline ImVec4 highlight2_rgb = { 1.f, 1.f, 1.f, 1.f };
 }
 
+namespace world_edit {
+    inline bool enabled = false;
+    inline float clarity = 1.10f;
+    inline float saturation = 1.10f;
+    inline float brightness = 1.10f;
+    inline float illumination = 4.f;
+}
+
 namespace RageBot
 {
     inline bool on = false;

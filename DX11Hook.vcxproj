@@ -178,6 +178,7 @@
     <ClCompile Include="Resources\External\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="ice\Features\camera_fx\camera_fx.cpp" />
     <ClCompile Include="ice\Features\world_modulation\world_modulation.cpp" />
+    <ClCompile Include="ice\Features\world_edit\world_edit.cpp" />
     <ClCompile Include="ice\Features\glow\glow.cpp" />
     <ClCompile Include="ice\Features\aspect_ratio\aspect_ratio.cpp" />
     <ClCompile Include="ice\Features\run_and_shoot\run_and_shoot.cpp" />
@@ -188,6 +189,7 @@
     <MASM Include="ice\Features\run_and_shoot\run_and_shoot_stub.asm" Condition="'$(Platform)'=='x64'" />
     <MASM Include="ice\Features\unlock_all\unlock_all_stub.asm" Condition="'$(Platform)'=='x64'" />
     <MASM Include="ice\Features\no_spread\no_spread_stub.asm" Condition="'$(Platform)'=='x64'" />
+    <MASM Include="ice\Features\world_edit\world_edit_stub.asm" Condition="'$(Platform)'=='x64'" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\Crash Handler\crash_handler.hpp" />

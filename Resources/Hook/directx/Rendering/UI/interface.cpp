@@ -421,6 +421,16 @@ namespace Render {
                 }
 
                 ImGui::Separator( );
+                ImGui::TextUnformatted( "World edit" );
+                ImGui::Checkbox( "Patch world XMM vector##world_edit_hook", &world_edit::enabled );
+                ImGui::BeginDisabled( !world_edit::enabled );
+                ImGui::SliderFloat( "Clarity##world_edit", &world_edit::clarity, 0.f, 5.f, "%.2f" );
+                ImGui::SliderFloat( "Saturation##world_edit", &world_edit::saturation, 0.f, 5.f, "%.2f" );
+                ImGui::SliderFloat( "Brightness##world_edit", &world_edit::brightness, 0.f, 5.f, "%.2f" );
+                ImGui::SliderFloat( "Illumination##world_edit", &world_edit::illumination, 0.f, 16.f, "%.2f" );
+                ImGui::EndDisabled( );
+
+                ImGui::Separator( );
                 ImGui::TextUnformatted( "Player glow modulation" );
                 ImGui::Checkbox( "Enable##player_glow", &world_modulation::player_glow_enabled );
                 if ( world_modulation::player_glow_enabled ) {

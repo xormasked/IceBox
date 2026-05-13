@@ -24,6 +24,12 @@ namespace IceBox {
 
 	void world_modulation_reset_all_to_frozen_snapshot( ) noexcept;
 
+	bool world_edit_install( );
+	void world_edit_uninstall( );
+	bool world_edit_installed( );
+	void world_edit_tick( ) noexcept;
+	void world_edit_prepare_uninject( ) noexcept;
+
 	auto world_glow_apply( ) -> void;
 
 	auto world_glow_prepare_uninject( ) -> void;
