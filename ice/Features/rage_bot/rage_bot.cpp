@@ -30,7 +30,12 @@ namespace {
 
 auto IceBox::rage_bot_run( bool enable ) -> void
 {
-	if ( !enable ) return;
+	if ( !enable )
+		return;
+
+	if ( !visuals::RageBotVisCheck && !visuals::RageBotPenCheck )
+		return;
+
 	if ( !Scimitar::round_state::CurrentState( Scimitar::round_state::Prep ) &&
 	     !Scimitar::round_state::CurrentState( Scimitar::round_state::Action ) )
 		return;

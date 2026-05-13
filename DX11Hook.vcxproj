@@ -166,6 +166,8 @@
     <ClCompile Include="ice\Features\unlock_all\unlock_all.cpp" />
     <ClCompile Include="ice\Features\no_spread\no_spread.cpp" />
     <ClCompile Include="ice\Features\no_recoil\no_recoil.cpp" />
+    <ClCompile Include="ice\Features\silent_aim\silent_aim.cpp" />
+    <ClCompile Include="ice\Features\silent_aim\silent_aim_fov_overlay.cpp" />
     <ClCompile Include="Resources\dllmain.cpp" />
     <ClCompile Include="Resources\External\ImGui\imgui.cpp" />
     <ClCompile Include="Resources\External\ImGui\imgui_demo.cpp" />

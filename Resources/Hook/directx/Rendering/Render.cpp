@@ -44,10 +44,10 @@ namespace Render {
 		const float screenWidth = static_cast< float >( GetSystemMetrics( SM_CXSCREEN ) );
 		const float screenHeight = static_cast< float >( GetSystemMetrics( SM_CYSCREEN ) );
 		auto* bg = ImGui::GetBackgroundDrawList( );
-		auto* fg = ImGui::GetForegroundDrawList( );
-
-		if ( fg )
-			IceBox::render_raycast_debug_overlay( ImGui::GetIO( ).DeltaTime, fg );
+		if ( bg ) {
+			IceBox::render_raycast_debug_overlay( ImGui::GetIO( ).DeltaTime, bg );
+			IceBox::render_silent_aim_fov_overlay( bg );
+		}
 
 		for ( int i = 0; i < controllerCount; ++i ) {
 			auto* controller = *reinterpret_cast< Scimitar::Controller** >( reinterpret_cast< uintptr_t >( controllerList ) + ( 0x8 * i ) );
@@ -86,7 +86,7 @@ namespace Render {
 					const ImU32 skeletonColor = visuals::SkeletonVisCheck
 						? ( segmentVisible ? IM_COL32( 0, 255, 0, 255 ) : IM_COL32( 255, 0, 0, 255 ) )
 						: ImGui::ColorConvertFloat4ToU32( visuals::SkeletonColor );
-					fg->AddLine(
+					bg->AddLine(
 						ImVec2( s1.x, s1.y ),
 						ImVec2( s2.x, s2.y ),
 						skeletonColor,

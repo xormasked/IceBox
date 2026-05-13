@@ -38,8 +38,11 @@ auto IceBox::camera_fx_prepare_uninject( ) -> void
 {
 	const uintptr_t eye = Scimitar::get_camera_fov( );
 	const uintptr_t vm = Scimitar::get_viewmodel_fov( );
-	if ( !s_have_fov_baseline || !eye || !vm )
+	if ( !s_have_fov_baseline )
 		return;
-	Memory::Write<float>( eye, s_baseline_eye_fov_rad );
-	Memory::Write<float>( vm, s_baseline_vm_fov_rad );
+	if ( eye )
+		Memory::Write< float >( eye, s_baseline_eye_fov_rad );
+	if ( vm )
+		Memory::Write< float >( vm, s_baseline_vm_fov_rad );
+	s_have_fov_baseline = false;
 }

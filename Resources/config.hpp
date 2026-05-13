@@ -6,7 +6,7 @@
 
 namespace visuals {
     inline bool RageBot = false;
-    inline bool RageBotVisCheck = false;
+    inline bool RageBotVisCheck = true;
     inline bool RageBotPenCheck = false;
 
     inline bool LongMelee = false;
@@ -19,6 +19,14 @@ namespace visuals {
     inline bool UnlockAllMidHook = false;
     inline bool NoSpread = false;
     inline bool NoRecoil = false;
+
+    inline bool SilentAim = false;
+    inline bool SilentAimVisCheck = true;
+    inline float SilentAimFovDegrees = 10.f;
+    inline bool SilentAimShowFovCircle = true;
+    inline bool SilentAimCircleFilled = false;
+    inline ImVec4 SilentAimCircleColor = { 1.f, 0.35f, 0.35f, 0.6f };
+    inline float SilentAimCircleOpacity = 1.f;
 
     inline float DustSpawnRadius = 3.f;
     inline ImVec4 DustSpawnColor = { 1.f, 1.f, 1.f, 1.f };
@@ -36,12 +44,12 @@ namespace visuals {
     inline bool AspectRatioHook = false;
     inline float AspectRatio = 1.5f;
 
-    inline bool Tracers = true;
+    inline bool Tracers = false;
     inline ImVec4 TracerColor = { 1.f, 1.f, 1.f, 1.f };
     inline const char* TracerPos[] = { "Bottom-Middle", "Center", "Top-Middle" };
     inline int TracerSelected = 0;
 
-    inline bool Skeleton = false;
+    inline bool Skeleton = true;
     inline ImVec4 SkeletonColor = { 1.f, 1.f, 1.f, 1.f };
     inline float SkeletonThickness = 1.5f;
     inline bool SkeletonVisCheck = false;

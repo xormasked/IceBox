@@ -90,6 +90,16 @@ namespace Render {
                    ( GetAsyncKeyState( VK_XBUTTON2 ) & 0x8000 ) != 0;
         }
 
+        constexpr ImGuiColorEditFlags kMenuColorRgb =
+            ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_Float | ImGuiColorEditFlags_InputRGB |
+            ImGuiColorEditFlags_NoOptions | ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_AlphaPreviewHalf |
+            ImGuiColorEditFlags_PickerHueBar;
+
+        constexpr ImGuiColorEditFlags kMenuColorRgba =
+            ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_Float | ImGuiColorEditFlags_InputRGB |
+            ImGuiColorEditFlags_NoOptions | ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_AlphaPreviewHalf |
+            ImGuiColorEditFlags_PickerHueBar;
+
         void spawn_dust_at_local_origin( )
         {
             auto* const gm = Scimitar::game_manager::get( );
@@ -219,10 +229,10 @@ namespace Render {
                 ImGui::SetNextItemWidth( 240.f );
                 ImGui::Combo( "##TracerPos", &visuals::TracerSelected, visuals::TracerPos, IM_ARRAYSIZE( visuals::TracerPos ) );
                 ImGui::SameLine( );
-                ImGui::ColorEdit3( "##TracerColor", &visuals::TracerColor.x, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_InputRGB );
+                ImGui::ColorEdit3( "##TracerColor", &visuals::TracerColor.x, kMenuColorRgb );
                 ImGui::Checkbox( "Skeleton", &visuals::Skeleton );
                 ImGui::SameLine( );
-                ImGui::ColorEdit3( "##SkeletonColor", &visuals::SkeletonColor.x, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_InputRGB );
+                ImGui::ColorEdit3( "##SkeletonColor", &visuals::SkeletonColor.x, kMenuColorRgb );
                 ImGui::SliderFloat( "Skeleton Thickness", &visuals::SkeletonThickness, 0.5f, 5.0f, "%.1f" );
                 ImGui::Checkbox( "Skeleton VisCheck", &visuals::SkeletonVisCheck );
                 ImGui::Checkbox( "Aspect ratio (camera +0x128)", &visuals::AspectRatioHook );
@@ -236,10 +246,32 @@ namespace Render {
                 ImGui::EndTabItem( );
             }
 
-            if ( ImGui::BeginTabItem( "world modulation" ) ) {
-                constexpr ImGuiColorEditFlags wf_pick =
-                    ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_InputRGB | ImGuiColorEditFlags_DisplayRGB;
+            if ( ImGui::BeginTabItem( "Aimbot" ) ) {
+                ImGui::Checkbox( "Silent aim", &visuals::SilentAim );
+                ImGui::BeginDisabled( !visuals::SilentAim );
+                ImGui::Checkbox( "Silent aim vis check", &visuals::SilentAimVisCheck );
+                ImGui::SliderFloat( "Silent aim FOV", &visuals::SilentAimFovDegrees, 1.f, 60.f, "%.1f deg" );
+                ImGui::Checkbox( "Silent aim FOV circle", &visuals::SilentAimShowFovCircle );
+                ImGui::Checkbox( "Fill FOV circle", &visuals::SilentAimCircleFilled );
+                ImGui::SliderFloat( "FOV circle opacity", &visuals::SilentAimCircleOpacity, 0.f, 1.f, "%.2f" );
+                ImGui::ColorEdit4( "FOV circle color", &visuals::SilentAimCircleColor.x, kMenuColorRgba );
+                ImGui::EndDisabled( );
 
+                ImGui::Separator( );
+                ImGui::Checkbox( "Ragebot", &visuals::RageBot );
+                if ( visuals::RageBot ) {
+                    ImGui::Indent( );
+                    if ( !visuals::RageBotVisCheck && !visuals::RageBotPenCheck )
+                        ImGui::TextWrapped( "Enable Vischeck and/or Pencheck for Ragebot to fire." );
+                    ImGui::Checkbox( "Ragebot Vischeck", &visuals::RageBotVisCheck );
+                    ImGui::Checkbox( "Ragebot Pencheck", &visuals::RageBotPenCheck );
+                    ImGui::Unindent( );
+                }
+
+                ImGui::EndTabItem( );
+            }
+
+            if ( ImGui::BeginTabItem( "world modulation" ) ) {
                 ImGui::Checkbox( "World Modulation", &world_modulation::enabled );
                 if ( world_modulation::enabled && IceBox::world_modulation_values_differ_from_frozen_snapshot( ) ) {
                     ImGui::SameLine( );
@@ -268,7 +300,7 @@ namespace Render {
                         ImGui::TableSetColumnIndex( 2 );
                         if ( world_modulation::edit_light ) {
                             ImGui::SetNextItemWidth( -FLT_MIN );
-                            ImGui::ColorEdit3( "##pick", &world_modulation::light_rgb.x, wf_pick );
+                            ImGui::ColorEdit3( "##pick", &world_modulation::light_rgb.x, kMenuColorRgb );
                         }
                         ImGui::PopID( );
 
@@ -282,7 +314,7 @@ namespace Render {
                         ImGui::TableSetColumnIndex( 2 );
                         if ( world_modulation::edit_reflection ) {
                             ImGui::SetNextItemWidth( -FLT_MIN );
-                            ImGui::ColorEdit3( "##pick", &world_modulation::reflection_rgb.x, wf_pick );
+                            ImGui::ColorEdit3( "##pick", &world_modulation::reflection_rgb.x, kMenuColorRgb );
                         }
                         ImGui::PopID( );
 
@@ -296,7 +328,7 @@ namespace Render {
                         ImGui::TableSetColumnIndex( 2 );
                         if ( world_modulation::edit_highlight ) {
                             ImGui::SetNextItemWidth( -FLT_MIN );
-                            ImGui::ColorEdit3( "##pick", &world_modulation::highlight_rgb.x, wf_pick );
+                            ImGui::ColorEdit3( "##pick", &world_modulation::highlight_rgb.x, kMenuColorRgb );
                         }
                         ImGui::PopID( );
 
@@ -310,7 +342,7 @@ namespace Render {
                         ImGui::TableSetColumnIndex( 2 );
                         if ( world_modulation::edit_top_bottom ) {
                             ImGui::SetNextItemWidth( -FLT_MIN );
-                            ImGui::ColorEdit3( "##pick", &world_modulation::top_bottom_rgb.x, wf_pick );
+                            ImGui::ColorEdit3( "##pick", &world_modulation::top_bottom_rgb.x, kMenuColorRgb );
                         }
                         ImGui::PopID( );
 
@@ -324,7 +356,7 @@ namespace Render {
                         ImGui::TableSetColumnIndex( 2 );
                         if ( world_modulation::edit_global_illum ) {
                             ImGui::SetNextItemWidth( -FLT_MIN );
-                            ImGui::ColorEdit3( "##pick", &world_modulation::global_illum_rgb.x, wf_pick );
+                            ImGui::ColorEdit3( "##pick", &world_modulation::global_illum_rgb.x, kMenuColorRgb );
                         }
                         ImGui::PopID( );
 
@@ -338,7 +370,7 @@ namespace Render {
                         ImGui::TableSetColumnIndex( 2 );
                         if ( world_modulation::edit_magic ) {
                             ImGui::SetNextItemWidth( -FLT_MIN );
-                            ImGui::ColorEdit3( "##pick", &world_modulation::magic_rgb.x, wf_pick );
+                            ImGui::ColorEdit3( "##pick", &world_modulation::magic_rgb.x, kMenuColorRgb );
                         }
                         ImGui::PopID( );
 
@@ -352,7 +384,7 @@ namespace Render {
                         ImGui::TableSetColumnIndex( 2 );
                         if ( world_modulation::edit_top_bottom_fog ) {
                             ImGui::SetNextItemWidth( -FLT_MIN );
-                            ImGui::ColorEdit3( "##pick", &world_modulation::top_bottom_fog_rgb.x, wf_pick );
+                            ImGui::ColorEdit3( "##pick", &world_modulation::top_bottom_fog_rgb.x, kMenuColorRgb );
                         }
                         ImGui::PopID( );
 
@@ -366,7 +398,7 @@ namespace Render {
                         ImGui::TableSetColumnIndex( 2 );
                         if ( world_modulation::edit_sky ) {
                             ImGui::SetNextItemWidth( -FLT_MIN );
-                            ImGui::ColorEdit3( "##pick", &world_modulation::sky_rgb.x, wf_pick );
+                            ImGui::ColorEdit3( "##pick", &world_modulation::sky_rgb.x, kMenuColorRgb );
                         }
                         ImGui::PopID( );
 
@@ -380,7 +412,7 @@ namespace Render {
                         ImGui::TableSetColumnIndex( 2 );
                         if ( world_modulation::edit_highlight2 ) {
                             ImGui::SetNextItemWidth( -FLT_MIN );
-                            ImGui::ColorEdit3( "##pick", &world_modulation::highlight2_rgb.x, wf_pick );
+                            ImGui::ColorEdit3( "##pick", &world_modulation::highlight2_rgb.x, kMenuColorRgb );
                         }
                         ImGui::PopID( );
 
@@ -399,14 +431,13 @@ namespace Render {
                                   player_glow_type_labels,
                                   IM_ARRAYSIZE( player_glow_type_labels ) );
                     ImGui::SetNextItemWidth( -FLT_MIN );
-                    ImGui::ColorEdit3( "Color##player_glow_rgb", &world_modulation::player_glow_rgb.x, wf_pick );
+                    ImGui::ColorEdit3( "Color##player_glow_rgb", &world_modulation::player_glow_rgb.x, kMenuColorRgb );
                 }
 
                 ImGui::EndTabItem( );
             }
 
             if ( ImGui::BeginTabItem( "Misc" ) ) {
-                ImGui::Checkbox( "Ragebot", &visuals::RageBot );
                 ImGui::Checkbox( "Long melee", &visuals::LongMelee );
                 ImGui::Checkbox( "Third person", &visuals::ThirdPerson );
 
@@ -535,19 +566,10 @@ namespace Render {
                     ImGui::Unindent( );
                 }
 
-                if ( visuals::RageBot ) {
-                    ImGui::Indent( );
-                    ImGui::Checkbox( "Vischeck", &visuals::RageBotVisCheck );
-                    ImGui::Checkbox( "Pencheck", &visuals::RageBotPenCheck );
-                    ImGui::Unindent( );
-                }
-
                 ImGui::Separator( );
                 ImGui::TextUnformatted( "Dust" );
                 ImGui::SliderFloat( "Dust radius", &visuals::DustSpawnRadius, 0.25f, 15.f, "%.2f" );
-                constexpr ImGuiColorEditFlags dust_pick =
-                    ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_InputRGB | ImGuiColorEditFlags_DisplayRGB;
-                ImGui::ColorEdit4( "Dust color", &visuals::DustSpawnColor.x, dust_pick );
+                ImGui::ColorEdit4( "Dust color", &visuals::DustSpawnColor.x, kMenuColorRgba );
                 if ( ImGui::Button( "Spawn dust (local origin)", ImVec2( 220.f, 0.f ) ) )
                     spawn_dust_at_local_origin( );
 

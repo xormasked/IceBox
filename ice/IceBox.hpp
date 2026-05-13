@@ -50,6 +50,12 @@ namespace IceBox {
 
 	void no_recoil_prepare_uninject( ) noexcept;
 
+	void silent_aim_tick( );
+
+	void silent_aim_prepare_uninject( ) noexcept;
+
+	void render_silent_aim_fov_overlay( ImDrawList* draw_list ) noexcept;
+
 	auto third_person( bool enable, float delta_seconds ) -> void;
 
 	void third_person_reset( );

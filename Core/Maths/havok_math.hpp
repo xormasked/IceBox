@@ -8,6 +8,7 @@
 #include "../Utils/memory.hpp"
 
 #include <algorithm>
+#include <cmath>
 
 #define RVA(offset) (void*)(Memory::ImageBase + offset)
 
@@ -400,6 +401,18 @@ namespace havok {
         t = std::clamp( t, 0.f, 1.f );
         const float inv = 1.f - t;
         return 1.f - inv * inv * inv;
+    }
+
+    // Horizontal FOV cone vs camera: pixel radius from screen center (symmetric pinch).
+    inline float screen_fov_cone_radius_px( float screen_width_px, float cone_full_degrees,
+                                            float camera_horizontal_fov_degrees ) noexcept
+    {
+        const float silent_t = tanf( deg_to_rad( cone_full_degrees * 0.5f ) );
+        const float cam_fov = camera_horizontal_fov_degrees > 1.f ? camera_horizontal_fov_degrees : 90.f;
+        const float cam_t = tanf( deg_to_rad( cam_fov * 0.5f ) );
+        if ( cam_t <= 1e-6f || !std::isfinite( cam_t ) )
+            return screen_width_px * 0.25f;
+        return ( screen_width_px * 0.5f ) * ( silent_t / cam_t );
     }
 
     inline void slope_operator(

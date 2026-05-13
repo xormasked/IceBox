@@ -11,6 +11,7 @@
 #include "../../../Core/Utils/Haru Hook/mid_hook.hpp"
 #include "../../../Resources/config.hpp"
 
+#include <atomic>
 #include <iostream>
 
 #ifdef _WIN64
@@ -26,6 +27,7 @@ namespace {
 
 	static bool s_tp_key_was_down = false;
 	static bool s_tp_toggled_on = false;
+	static std::atomic_bool s_visual_restore_pending{ false };
 
 	void third_person_tick( float dt )
 	{
@@ -113,6 +115,13 @@ namespace d3d11 {
 		if ( g_shutting_down )
 			return p_present( p_swap_chain, sync_interval, flags );
 
+		if ( s_visual_restore_pending.exchange( false ) ) {
+			IceBox::third_person_reset( );
+			IceBox::camera_fx_prepare_uninject( );
+			g_shutting_down = true;
+			return p_present( p_swap_chain, sync_interval, flags );
+		}
+
 		if ( !init ) {
 			if ( !SUCCEEDED( p_swap_chain->GetDevice( __uuidof( ID3D11Device ), ( void** ) &p_device ) ) )
 				return p_present( p_swap_chain, sync_interval, flags );
@@ -147,6 +156,8 @@ namespace d3d11 {
 		ImGui::NewFrame( );
 		const float dt = ImGui::GetIO( ).DeltaTime;
 
+		IceBox::camera_fx_apply_fov( );
+
 		IceBox::raycast_debug_hit_marker_decay( dt );
 		IceBox::jitter_peek_tick( dt );
 		IceBox::chat_spammer_tick( );
@@ -179,6 +190,8 @@ namespace d3d11 {
 		sync_install_toggle( visuals::NoRecoil, s_no_recoil_last, IceBox::no_recoil_install, IceBox::no_recoil_uninstall,
 		                     IceBox::no_recoil_installed );
 
+		IceBox::silent_aim_tick( );
+
 		if ( round_active && visuals::AspectRatioHook && IceBox::aspect_ratio_installed( ) )
 			aspect_ratio_live = visuals::AspectRatio;
 #endif
@@ -191,7 +204,6 @@ namespace d3d11 {
 
 		if ( round_active ) {
 			IceBox::world_modulation_monitor_game( );
-			IceBox::camera_fx_apply_fov( );
 			IceBox::world_modulation_apply( );
 			IceBox::world_glow_apply( );
 			IceBox::long_melee( visuals::LongMelee );
@@ -263,16 +275,23 @@ namespace d3d11 {
 			if ( GetAsyncKeyState( VK_INSERT ) & 1 )
 				Render::menu_open = !Render::menu_open;
 			if ( ( GetAsyncKeyState( VK_END ) & 1 ) || should_uninject ) {
+				s_visual_restore_pending.store( true );
+				for ( int i = 0; i < 500 && !g_shutting_down; ++i )
+					Sleep( 10 );
+				if ( !g_shutting_down ) {
+					IceBox::third_person_reset( );
+					IceBox::camera_fx_prepare_uninject( );
+					g_shutting_down = true;
+				}
 				IceBox::world_modulation_prepare_uninject( );
 				IceBox::world_glow_prepare_uninject( );
-				IceBox::camera_fx_prepare_uninject( );
 				IceBox::no_recoil_prepare_uninject( );
+				IceBox::silent_aim_prepare_uninject( );
 				break;
 			}
 		}
 
 		g_shutting_down = true;
-		IceBox::third_person_reset( );
 		release_hooks_and_cave( );
 		unhook( );
 		MH_DisableHook( MH_ALL_HOOKS );
