@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Core/Maths/havok_math.hpp"
+#include "../Core/Engine/Anvil/scimitar.hpp"
 
 struct ImDrawList;
 
@@ -86,5 +87,7 @@ namespace IceBox {
 	void enemy_outlines_tick( );
 
 	void enemy_outlines_prepare_uninject( ) noexcept;
+
+	auto self_revive( bool enable ) -> void;
 
 }

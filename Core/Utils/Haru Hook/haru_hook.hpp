@@ -12,6 +12,8 @@
 
 namespace HaruHook {
 
+    // --- Module bounds (Psapi) -------------------------------------------------
+
     struct ModuleSpan {
         void* base{};
         size_t size{};
@@ -37,6 +39,8 @@ namespace HaruHook {
         return { mi.lpBaseOfDll, mi.SizeOfImage };
     }
 
+    // --- Standalone executable pages ------------------------------------------
+
     inline void* allocate_code_cave( size_t bytes )
     {
         return VirtualAlloc( nullptr, bytes, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE );
@@ -60,45 +64,50 @@ namespace HaruHook {
 
 #ifdef _WIN64
 
-    // VirtualAlloc at an address reachable by E9 rel32 from reference_next_rip (typically hook_site + 5).
+    // --- x64: allocate within ±2GiB of reference_next_rip (E9 rel32 from hook+5) ---
+
     inline void* allocate_executable_near_rel32( uintptr_t reference_next_rip, size_t bytes )
     {
-        constexpr uintptr_t align_mask = 0xFFFF;
-        constexpr intptr_t step = static_cast< intptr_t >( 0x10000 );
-        constexpr intptr_t max_delta = static_cast< intptr_t >( 0x70000000 );
+        constexpr uintptr_t page_align_mask = 0xFFFF;
+        constexpr intptr_t scan_step = static_cast<intptr_t>( 0x10000 );
+        constexpr intptr_t scan_limit = static_cast<intptr_t>( 0x70000000 );
 
-        auto try_candidate = [&]( uintptr_t aligned_candidate ) -> void* {
-            if ( aligned_candidate < 0x10000 )
+        auto try_page = [&]( uintptr_t aligned_addr ) -> void* {
+            if ( aligned_addr < 0x10000 )
                 return nullptr;
-            void* const p =
-                VirtualAlloc( reinterpret_cast< LPVOID >( aligned_candidate ), bytes,
-                              MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE );
+            void* const p = VirtualAlloc(
+                reinterpret_cast<LPVOID>( aligned_addr ),
+                bytes,
+                MEM_COMMIT | MEM_RESERVE,
+                PAGE_EXECUTE_READWRITE );
             if ( !p )
                 return nullptr;
             const intptr_t disp =
-                reinterpret_cast< intptr_t >( p ) - static_cast< intptr_t >( reference_next_rip );
+                reinterpret_cast<intptr_t>( p ) - static_cast<intptr_t>( reference_next_rip );
             if ( disp >= INT32_MIN && disp <= INT32_MAX )
                 return p;
             VirtualFree( p, 0, MEM_RELEASE );
             return nullptr;
         };
 
-        if ( void* const p = try_candidate( reference_next_rip & ~align_mask ) )
-            return p;
+        if ( void* const first = try_page( reference_next_rip & ~page_align_mask ) )
+            return first;
 
-        const intptr_t base = static_cast< intptr_t >( reference_next_rip );
-        for ( intptr_t d = step; d <= max_delta; d += step ) {
-            const uintptr_t below = static_cast< uintptr_t >( base - d );
-            if ( void* const p = try_candidate( below & ~align_mask ) )
+        const intptr_t ref = static_cast<intptr_t>( reference_next_rip );
+        for ( intptr_t delta = scan_step; delta <= scan_limit; delta += scan_step ) {
+            const uintptr_t below = static_cast<uintptr_t>( ref - delta );
+            if ( void* const p = try_page( below & ~page_align_mask ) )
                 return p;
-            const uintptr_t above = static_cast< uintptr_t >( base + d );
-            if ( void* const p = try_candidate( above & ~align_mask ) )
+            const uintptr_t above = static_cast<uintptr_t>( ref + delta );
+            if ( void* const p = try_page( above & ~page_align_mask ) )
                 return p;
         }
         return nullptr;
     }
 
 #endif
+
+    // --- VirtualProtect + icache ----------------------------------------------
 
     inline bool virtual_protect( void* p, size_t bytes, DWORD new_prot, DWORD* old_out )
     {
@@ -109,6 +118,8 @@ namespace HaruHook {
     {
         FlushInstructionCache( GetCurrentProcess( ), p, bytes );
     }
+
+    // --- Patch writers ---------------------------------------------------------
 
     // E9 rel32 — fails if target not reachable within ±2GiB from jmp end.
     inline bool write_jump_rel32( void* patch_site, void* target )
@@ -169,6 +180,8 @@ namespace HaruHook {
         return true;
     }
 
+    // --- Stolen-byte trampoline (optional helper path) -------------------------
+
     struct BackupTrampoline {
         void* cave{};
         size_t cave_bytes{};
@@ -222,49 +235,45 @@ namespace HaruHook {
         return out;
     }
 
-    // Patch hook_site: jmp -> handler. Requires stolen_bytes >= patch jmp size and instruction-aligned steal.
-    // On success, *out_tramp receives trampoline (caller must free_backup_trampoline).
-    inline bool install_mid_hook( void* hook_site, size_t stolen_bytes, void* handler_routine, BackupTrampoline* out_tramp )
+    // Patch hook_site → handler; steals stolen_bytes (must fit jmp + NOP slide).
+    // On success caller owns *out_tramp (free with free_backup_trampoline).
+    [[nodiscard]] inline bool install_mid_hook(
+        void* hook_site,
+        size_t stolen_bytes,
+        void* handler_routine,
+        BackupTrampoline* out_tramp )
     {
         if ( !hook_site || !handler_routine || !out_tramp )
             return false;
 
 #ifdef _WIN64
         constexpr size_t jmp_sz = 14;
-        if ( stolen_bytes < jmp_sz )
-            return false;
-        BackupTrampoline tramp = backup_instructions_trampoline( hook_site, stolen_bytes );
-        if ( !tramp.cave )
-            return false;
-        if ( !write_jump_abs64( hook_site, handler_routine ) ) {
-            free_backup_trampoline( tramp );
-            return false;
-        }
-        if ( !nop_pad( hook_site, stolen_bytes, jmp_sz ) ) {
-            free_backup_trampoline( tramp );
-            return false;
-        }
 #else
         constexpr size_t jmp_sz = 5;
+#endif
         if ( stolen_bytes < jmp_sz )
             return false;
+
         BackupTrampoline tramp = backup_instructions_trampoline( hook_site, stolen_bytes );
         if ( !tramp.cave )
             return false;
-        if ( !write_jump_rel32( hook_site, handler_routine ) ) {
-            free_backup_trampoline( tramp );
-            return false;
-        }
-        if ( !nop_pad( hook_site, stolen_bytes, jmp_sz ) ) {
-            free_backup_trampoline( tramp );
-            return false;
-        }
+
+#ifdef _WIN64
+        const bool wrote_jmp = write_jump_abs64( hook_site, handler_routine );
+#else
+        const bool wrote_jmp = write_jump_rel32( hook_site, handler_routine );
 #endif
+        if ( !wrote_jmp || !nop_pad( hook_site, stolen_bytes, jmp_sz ) ) {
+            free_backup_trampoline( tramp );
+            return false;
+        }
 
         flush_icache( hook_site, stolen_bytes );
         *out_tramp = tramp;
         return true;
     }
+
+    // --- Pattern scan -----------------------------------------------------------
 
     inline void* find_pattern( void* search_base, size_t search_len, const uint8_t* pat, size_t pat_len, int occurrence = 1 )
     {

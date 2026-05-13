@@ -46,19 +46,21 @@ namespace {
 
 #ifdef _WIN64
 	void sync_install_toggle( bool& enabled,
-	                          bool& last,
-	                          bool ( *install )( ),
-	                          void ( *uninstall )( ),
-	                          bool ( *installed )( ) )
+		bool& last,
+		bool ( *install )( ),
+		void ( *uninstall )( ),
+		bool ( *installed )( ) )
 	{
 		if ( enabled != last ) {
 			if ( enabled ) {
 				if ( !install( ) )
 					enabled = false;
-			} else
+			}
+			else
 				uninstall( );
 			last = enabled;
-		} else if ( enabled && !installed( ) )
+		}
+		else if ( enabled && !installed( ) )
 			install( );
 	}
 #endif
@@ -91,8 +93,8 @@ namespace d3d11 {
 
 		const D3D_FEATURE_LEVEL feature_levels[ ] = { D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_0 };
 		if ( D3D11CreateDeviceAndSwapChain(
-		         NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, feature_levels, 2, D3D11_SDK_VERSION, &sd, &swap_chain,
-		         &device, nullptr, nullptr ) != S_OK )
+			NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, feature_levels, 2, D3D11_SDK_VERSION, &sd, &swap_chain,
+			&device, nullptr, nullptr ) != S_OK )
 			return false;
 
 		void** p_vtable = *reinterpret_cast< void*** >( swap_chain );
@@ -105,7 +107,7 @@ namespace d3d11 {
 	auto __stdcall WndProc( const HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam ) -> LRESULT
 	{
 		if ( !g_shutting_down && Render::menu_open &&
-		     ImGui_ImplWin32_WndProcHandler( hWnd, uMsg, wParam, lParam ) )
+			ImGui_ImplWin32_WndProcHandler( hWnd, uMsg, wParam, lParam ) )
 			return true;
 		return CallWindowProc( oWndProc, hWnd, uMsg, wParam, lParam );
 	}
@@ -148,7 +150,7 @@ namespace d3d11 {
 		ImGui_ImplWin32_NewFrame( );
 
 		const bool round_active = Scimitar::round_state::CurrentState( Scimitar::round_state::Prep ) ||
-		                          Scimitar::round_state::CurrentState( Scimitar::round_state::Action );
+			Scimitar::round_state::CurrentState( Scimitar::round_state::Action );
 
 		if ( round_active )
 			IceBox::rage_bot_run( visuals::RageBot );
@@ -160,6 +162,7 @@ namespace d3d11 {
 
 		IceBox::raycast_debug_hit_marker_decay( dt );
 		IceBox::jitter_peek_tick( dt );
+		IceBox::self_revive( visuals::SelfRevive );
 		IceBox::chat_spammer_tick( );
 
 #ifdef _WIN64
@@ -180,25 +183,26 @@ namespace d3d11 {
 			s_run_shoot_last = visuals::RunAndShoot;
 			s_world_edit_last = world_edit::enabled;
 			s_better_light_last = visuals::BetterLight;
-		} else {
+		}
+		else {
 			sync_install_toggle( visuals::AspectRatioHook, s_aspect_toggle_last, IceBox::aspect_ratio_install,
-			                     IceBox::aspect_ratio_uninstall, IceBox::aspect_ratio_installed );
+				IceBox::aspect_ratio_uninstall, IceBox::aspect_ratio_installed );
 			sync_install_toggle( visuals::RunAndShoot, s_run_shoot_last, IceBox::run_and_shoot_install,
-			                     IceBox::run_and_shoot_uninstall, IceBox::run_and_shoot_installed );
+				IceBox::run_and_shoot_uninstall, IceBox::run_and_shoot_installed );
 			sync_install_toggle( world_edit::enabled, s_world_edit_last, IceBox::world_edit_install,
-			                     IceBox::world_edit_uninstall, IceBox::world_edit_installed );
+				IceBox::world_edit_uninstall, IceBox::world_edit_installed );
 			sync_install_toggle( visuals::BetterLight, s_better_light_last, IceBox::better_light_install,
-			                     IceBox::better_light_uninstall, IceBox::better_light_installed );
+				IceBox::better_light_uninstall, IceBox::better_light_installed );
 		}
 
 		sync_install_toggle( visuals::UnlockAllMidHook, s_unlock_all_last, IceBox::unlock_all_install,
-		                     IceBox::unlock_all_uninstall, IceBox::unlock_all_installed );
+			IceBox::unlock_all_uninstall, IceBox::unlock_all_installed );
 
 		sync_install_toggle( visuals::NoSpread, s_no_spread_last, IceBox::no_spread_install, IceBox::no_spread_uninstall,
-		                     IceBox::no_spread_installed );
+			IceBox::no_spread_installed );
 
 		sync_install_toggle( visuals::NoRecoil, s_no_recoil_last, IceBox::no_recoil_install, IceBox::no_recoil_uninstall,
-		                     IceBox::no_recoil_installed );
+			IceBox::no_recoil_installed );
 
 		IceBox::silent_aim_tick( );
 
@@ -241,10 +245,10 @@ namespace d3d11 {
 
 	auto __stdcall main( ) -> int
 	{
-		const auto release_hooks_and_cave = []( ) {
+		const auto release_hooks_and_cave = [ ] ( ) {
 			mid_hook::uninstall_all( );
 			HaruHook::release_injection_cave( );
-		};
+			};
 
 		Engine::Get( )->SetupConsole( );
 
@@ -261,15 +265,15 @@ namespace d3d11 {
 		crash_config.buildConfig = "Release";
 		crash_config.additionalNotes = "StackTrace example - v1.3.0";
 		crash_config.includeStackTrace = true;
-		crash_config.onCrash = []( const CrashCatch::CrashContext& ctx ) {
+		crash_config.onCrash = [ ] ( const CrashCatch::CrashContext& ctx ) {
 			std::cout << "\n[CrashCatch] Crash captured!\n"
-			          << "  Timestamp : " << ctx.timestamp << "\n"
-			          << "  Log file  : " << ctx.logFilePath << "\n"
+				<< "  Timestamp : " << ctx.timestamp << "\n"
+				<< "  Log file  : " << ctx.logFilePath << "\n"
 #ifdef CRASHCATCH_PLATFORM_WINDOWS
-			          << "  Dump file : " << ctx.dumpFilePath << "\n"
+				<< "  Dump file : " << ctx.dumpFilePath << "\n"
 #endif
-			          << "  Signal    : " << ctx.signalOrCode << "\n";
-		};
+				<< "  Signal    : " << ctx.signalOrCode << "\n";
+			};
 		crash_config.showCrashDialog = true;
 		CrashCatch::initialize( crash_config );
 
@@ -278,11 +282,15 @@ namespace d3d11 {
 		auto bail = [ & ] {
 			release_hooks_and_cave( );
 			return 1;
-		};
-		if ( !get_present_pointer( ) || !init_hooks( ) || MH_CreateHook( reinterpret_cast< void** >( p_present_target ),
-		                                                                   &detour_present,
-		                                                                   reinterpret_cast< void** >( &p_present ) ) != MH_OK ||
-		     MH_EnableHook( p_present_target ) != MH_OK )
+			};
+
+		if ( !init_hooks( ) )
+			return bail( );
+
+		if ( !get_present_pointer( ) ||
+			MH_CreateHook( reinterpret_cast< void** >( p_present_target ), &detour_present,
+				reinterpret_cast< void** >( &p_present ) ) != MH_OK ||
+			MH_EnableHook( p_present_target ) != MH_OK )
 			return bail( );
 
 		while ( true ) {

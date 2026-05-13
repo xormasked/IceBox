@@ -70,6 +70,8 @@ namespace Scimitar {
 
     using OutlineMeshFn = void ( __fastcall* )( __int64 self );
     using OutlineApplyFn = void ( __fastcall* )( __int64 mgr, __int64 mesh_ctx, int mode, int* bgra );
+    using PawnActionFn = char ( __fastcall* )( __int64 pawn, unsigned int state, __int64 a3, __int64 a4 );
+    using AddDustFn = char ( __fastcall* )( uint64_t mgr, ubiVector4* position, float radius, ubiVector4* color );
 
     inline GetSkeletonComponentFn get_skeleton_component = nullptr;
     inline GetAnimationComponentFn get_animation_component_fn = nullptr;
@@ -83,19 +85,18 @@ namespace Scimitar {
 
     inline OutlineMeshFn outline_mesh = nullptr;
     inline OutlineApplyFn outline_fn = nullptr;
+    inline PawnActionFn pawn_action = nullptr;
+    inline AddDustFn add_dust_fn = nullptr;
 
     inline void add_dust( const ubiVector4& position, float radius, const ubiVector4& color )
     {
         const uint64_t mgr = Memory::Read< uint64_t >( Memory::ImageBase + 0x5E2FF48 );
-        if ( !mgr || !Memory::valid_pointer( reinterpret_cast< void* >( mgr ) ) )
+        if ( !mgr || !Memory::valid_pointer( reinterpret_cast< void* >( mgr ) ) || !add_dust_fn )
             return;
-
-        using AddDustFn = char ( __fastcall* )( uint64_t, ubiVector4*, float, ubiVector4* );
-        static const AddDustFn fn = reinterpret_cast< AddDustFn >( Memory::ImageBase + 0xFA8180 );
 
         ubiVector4 pos = position;
         ubiVector4 col = color;
-        fn( mgr, &pos, radius, &col );
+        add_dust_fn( mgr, &pos, radius, &col );
     }
 
     inline auto get_camera_fx( )
@@ -322,14 +323,13 @@ namespace Scimitar {
             return reinterpret_cast< Entity* >( *( uint64_t* ) ( this + 0x18 ) );
         }
 
-        auto view_angles( ) -> ubiVector4 {
-            return *reinterpret_cast< ubiVector4* >( *reinterpret_cast< uint64_t* >( this + 0x1270 ) + 0xC0 );
+        char pawn_action( unsigned int state ) noexcept
+        {
+            return Scimitar::pawn_action( reinterpret_cast<__int64>( this ), state, 0, 0 );
         }
 
-        Entity* get_camera_entity( )
-        {
-            const uintptr_t p = Memory::ReadPtr<uintptr_t>( Memory::ImageBase + 0x6806380, { 0x60, 0x60 } );
-            return reinterpret_cast< Entity* >( p );
+        auto view_angles( ) -> ubiVector4 {
+            return *reinterpret_cast< ubiVector4* >( *reinterpret_cast< uint64_t* >( this + 0x1270 ) + 0xC0 );
         }
     };
 
@@ -484,6 +484,8 @@ namespace Scimitar {
         chat_team = reinterpret_cast< ChatSendFn >( Memory::ImageBase + 0x382B360 );
         outline_mesh = reinterpret_cast< OutlineMeshFn >( Memory::ImageBase + 0x86E3E0 );
         outline_fn = reinterpret_cast< OutlineApplyFn >( Memory::ImageBase + 0x27013D0 );
+        pawn_action = reinterpret_cast< PawnActionFn >( Memory::ImageBase + 0x22C8120 );
+        add_dust_fn = reinterpret_cast< AddDustFn >( Memory::ImageBase + 0xFA8180 );
     }
 }
 

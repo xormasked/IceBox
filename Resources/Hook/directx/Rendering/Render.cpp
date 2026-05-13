@@ -6,7 +6,10 @@
 #include "../../../../Core/Engine/Anvil/skeletons.h"
 #include "../../../../ice/IceBox.hpp"
 #include "../../../../Resources/config.hpp"
+
 #include "../../../External/ImGui/imgui.h"
+
+#include <cmath>
 
 namespace {
 
@@ -68,32 +71,81 @@ namespace Render {
 					bg->AddLine( { screenWidth / 2.0f, 0.0f }, { screenPos.x, screenPos.y }, ImGui::ColorConvertFloat4ToU32( visuals::TracerColor ) );
 			}
 
-			if ( !visuals::Skeleton ) continue;
+			const bool draw_skeleton = visuals::Skeleton;
+			const bool draw_box_esp = visuals::BoxEsp;
+			if ( !draw_skeleton && !draw_box_esp )
+				continue;
 
 			auto* skeleton = entity->get_skeleton( );
-			if ( !skeleton ) continue;
+			if ( !skeleton )
+				continue;
+
+			bool box_have_pts = false;
+			float box_min_x = 0.f, box_min_y = 0.f, box_max_x = 0.f, box_max_y = 0.f;
+			const auto box_accum = [ & ]( const ubiVector2& scr ) {
+				if ( !box_have_pts ) {
+					box_have_pts = true;
+					box_min_x = box_max_x = scr.x;
+					box_min_y = box_max_y = scr.y;
+				} else {
+					box_min_x = fminf( box_min_x, scr.x );
+					box_min_y = fminf( box_min_y, scr.y );
+					box_max_x = fmaxf( box_max_x, scr.x );
+					box_max_y = fmaxf( box_max_y, scr.y );
+				}
+			};
+
+			bool any_visible_skeleton_segment = false;
 
 			for ( const auto& bones : g_SkeletonPairs ) {
 				const havok::Vec4 p1 = skeleton->bone( bones.first );
 				const havok::Vec4 p2 = skeleton->bone( bones.second );
 
-				bool segmentVisible = true;
+				bool segment_visible = true;
 				if ( visuals::SkeletonVisCheck )
-					segmentVisible = IsSkeletonSegmentVisible( p1, p2 );
+					segment_visible = IsSkeletonSegmentVisible( p1, p2 );
 
 				ubiVector2 s1{}, s2{};
-				if ( W2S( ubiVector3( p1.x, p1.y, p1.z ), s1 ) && W2S( ubiVector3( p2.x, p2.y, p2.z ), s2 ) ) {
-				const ImU32 skeletonColor = visuals::SkeletonVisCheck
-					? ( segmentVisible ? ImGui::ColorConvertFloat4ToU32( visuals::SkeletonVisVisibleColor )
-					                   : ImGui::ColorConvertFloat4ToU32( visuals::SkeletonVisInvisColor ) )
-					: ImGui::ColorConvertFloat4ToU32( visuals::SkeletonColor );
+				const bool w1 = W2S( ubiVector3( p1.x, p1.y, p1.z ), s1 );
+				const bool w2 = W2S( ubiVector3( p2.x, p2.y, p2.z ), s2 );
+
+				if ( draw_box_esp ) {
+					if ( w1 )
+						box_accum( s1 );
+					if ( w2 )
+						box_accum( s2 );
+					if ( visuals::SkeletonVisCheck && w1 && w2 && segment_visible )
+						any_visible_skeleton_segment = true;
+				}
+
+				if ( draw_skeleton && w1 && w2 ) {
+					const ImU32 skeleton_color = visuals::SkeletonVisCheck ?
+						     ( segment_visible ? ImGui::ColorConvertFloat4ToU32( visuals::SkeletonVisVisibleColor )
+						                       : ImGui::ColorConvertFloat4ToU32( visuals::SkeletonVisInvisColor ) ) :
+						     ImGui::ColorConvertFloat4ToU32( visuals::SkeletonColor );
 					bg->AddLine(
 						ImVec2( s1.x, s1.y ),
 						ImVec2( s2.x, s2.y ),
-						skeletonColor,
+						skeleton_color,
 						visuals::SkeletonThickness
 					);
 				}
+			}
+
+			if ( draw_box_esp && box_have_pts ) {
+				constexpr float k_box_pad_px = 2.f;
+				const ImU32 box_col = visuals::SkeletonVisCheck ?
+						   ( any_visible_skeleton_segment ? ImGui::ColorConvertFloat4ToU32( visuals::SkeletonVisVisibleColor )
+						                                  : ImGui::ColorConvertFloat4ToU32( visuals::SkeletonVisInvisColor ) ) :
+						   ImGui::ColorConvertFloat4ToU32( visuals::SkeletonColor );
+				bg->AddRect(
+					ImVec2( box_min_x - k_box_pad_px, box_min_y - k_box_pad_px ),
+					ImVec2( box_max_x + k_box_pad_px, box_max_y + k_box_pad_px ),
+					box_col,
+					0.f,
+					0,
+					visuals::BoxEspThickness
+				);
 			}
 		}
 

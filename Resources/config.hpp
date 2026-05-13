@@ -11,7 +11,7 @@ namespace visuals {
 
     inline bool LongMelee = false;
 
-	inline bool ThirdPerson = false;
+    inline bool ThirdPerson = false;
     inline int ThirdPersonVk = 'V';
 
     inline bool RaycastClosestDebug = false;
@@ -19,6 +19,9 @@ namespace visuals {
     inline bool UnlockAllMidHook = false;
     inline bool NoSpread = false;
     inline bool NoRecoil = false;
+
+    inline bool SelfRevive = false;
+    inline int SelfReviveVk = 'R';
 
     inline bool SilentAim = false;
     inline bool SilentAimVisCheck = true;
@@ -48,7 +51,7 @@ namespace visuals {
 
     inline bool Tracers = false;
     inline ImVec4 TracerColor = { 1.f, 1.f, 1.f, 1.f };
-    inline const char* TracerPos[] = { "Bottom-Middle", "Center", "Top-Middle" };
+    inline const char* TracerPos[ ] = { "Bottom-Middle", "Center", "Top-Middle" };
     inline int TracerSelected = 0;
 
     inline bool Skeleton = true;
@@ -57,6 +60,9 @@ namespace visuals {
     inline ImVec4 SkeletonVisInvisColor = { 1.f, 0.f, 0.f, 1.f };
     inline float SkeletonThickness = 1.5f;
     inline bool SkeletonVisCheck = false;
+
+    inline bool BoxEsp = false;
+    inline float BoxEspThickness = 0.5f;
 
     inline bool EnemyOutline = false;
     inline ImVec4 EnemyOutlineColor = { 1.f, 0.25f, 0.25f, 1.f };
