@@ -12,6 +12,16 @@ namespace IceBox {
 
 	auto camera_fx_apply_fov( ) -> void;
 
+	auto world_modulation_monitor_game( ) -> void;
+
+	auto world_modulation_apply( ) -> void;
+
+	auto world_modulation_prepare_uninject( ) -> void;
+
+	bool world_modulation_values_differ_from_frozen_snapshot( ) noexcept;
+
+	void world_modulation_reset_all_to_frozen_snapshot( ) noexcept;
+
 	bool aspect_ratio_install( );
 	void aspect_ratio_uninstall( );
 	bool aspect_ratio_installed( );
@@ -35,6 +45,8 @@ namespace IceBox {
 	void raycast_closest_player_debug_tick( float delta_seconds );
 
 	void jitter_peek_tick( float delta_seconds );
+
+	void chat_spammer_tick( );
 
 	void render_raycast_debug_overlay( float delta_seconds, ImDrawList* draw_list );
 

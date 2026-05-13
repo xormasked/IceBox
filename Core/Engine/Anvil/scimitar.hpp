@@ -66,6 +66,7 @@ namespace Scimitar {
     using EDSrvListFn = uintptr_t( __fastcall* )( unsigned __int8* a1, Entity* a2 );
     using ResolveComponentFn = uintptr_t( __fastcall* )( uintptr_t a1, unsigned int type_hash, int unk );
     using SetGlobalMatrixFn = __int64( __fastcall* )( __int64 entity, __m128* matrix, char one );
+    using ChatSendFn = void( __fastcall* )( uint64_t a1, char** strings );
 
     inline GetSkeletonComponentFn get_skeleton_component = nullptr;
     inline GetAnimationComponentFn get_animation_component_fn = nullptr;
@@ -74,6 +75,22 @@ namespace Scimitar {
     inline EDSrvListFn ed_srv_list = nullptr;
     inline ResolveComponentFn resolve_component_game = nullptr;
     inline SetGlobalMatrixFn set_global_matrix_D871E0 = nullptr;
+    inline ChatSendFn chat_team = nullptr;
+    inline ChatSendFn chat_all = nullptr;
+
+    inline void add_dust( const ubiVector4& position, float radius, const ubiVector4& color )
+    {
+        const uint64_t mgr = Memory::Read< uint64_t >( Memory::ImageBase + 0x5E2FF48 );
+        if ( !mgr || !Memory::valid_pointer( reinterpret_cast< void* >( mgr ) ) )
+            return;
+
+        using AddDustFn = char ( __fastcall* )( uint64_t, ubiVector4*, float, ubiVector4* );
+        static const AddDustFn fn = reinterpret_cast< AddDustFn >( Memory::ImageBase + 0xFA8180 );
+
+        ubiVector4 pos = position;
+        ubiVector4 col = color;
+        fn( mgr, &pos, radius, &col );
+    }
 
     inline auto get_camera_fx( )
     {
@@ -203,6 +220,40 @@ namespace Scimitar {
         Controller* get_local_controller( )
         {
             return Memory::call_virtual<Controller*>( this, 0x28 );
+        }
+
+        auto send_chat_message( const char* text, bool team ) -> void {
+            if ( !text || !*text )
+                return;
+
+            if ( team )
+            {
+                if ( !chat_team )
+                    return;
+                chat_team(
+                    *reinterpret_cast< uint64_t* >( this ) + 0x6C0,
+                    [ & ] ( )
+                    {
+                        static char* a[ 1 ];
+                        a[ 0 ] = const_cast< char* >( text );
+                        return a;
+                    }
+                ( ) );
+            }
+            else
+            {
+                if ( !chat_all )
+                    return;
+                chat_all(
+                    *reinterpret_cast< uint64_t* >( this ) + 0x6C0,
+                    [ & ] ( )
+                    {
+                        static char* a[ 1 ];
+                        a[ 0 ] = const_cast< char* >( text );
+                        return a;
+                    }
+                ( ) );
+            }
         }
     };
 
@@ -387,6 +438,8 @@ namespace Scimitar {
         ed_srv_list = reinterpret_cast< EDSrvListFn >( Memory::ImageBase + 0xD7EDF0 );
         resolve_component_game = reinterpret_cast< ResolveComponentFn >( Memory::ImageBase + 0x181A810 );
         set_global_matrix_D871E0 = reinterpret_cast< SetGlobalMatrixFn >( Memory::ImageBase + 0xD871E0 );
+        chat_all = reinterpret_cast< ChatSendFn >( Memory::ImageBase + 0x382B270 );
+        chat_team = reinterpret_cast< ChatSendFn >( Memory::ImageBase + 0x382B360 );
     }
 }
 

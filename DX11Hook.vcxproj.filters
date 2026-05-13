@@ -65,6 +65,9 @@
     <ClInclude Include="Core\Engine\Anvil\skeletons.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Engine\Anvil\AnvilNext LightingEngine\R6LightEngine.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="Core\Engine\engine.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

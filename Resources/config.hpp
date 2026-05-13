@@ -17,9 +17,18 @@ namespace visuals {
     inline bool RunAndShoot = false;
     inline bool UnlockAllMidHook = false;
 
+    inline float DustSpawnRadius = 3.f;
+    inline ImVec4 DustSpawnColor = { 1.f, 1.f, 1.f, 1.f };
+
     inline bool JitterPeek = false;
     inline int JitterPeekVk = 'G'; // default: G
     inline int JitterPeekDelayMs = 80;
+
+    inline bool ChatSpamEnabled = false;
+    inline bool ChatSpamTeam = false;
+    inline bool ChatSpamAll = false;
+    inline int ChatSpamIntervalMs = 250;
+    inline char ChatSpamMessage[ 256 ] = "";
 
     inline bool AspectRatioHook = false;
     inline float AspectRatio = 1.5f;
@@ -44,6 +53,30 @@ namespace globals {
     inline int ScreenY = GetSystemMetrics( SM_CYSCREEN );
     inline float Width = ( float ) ScreenX;
     inline float Height = ( float ) ScreenY;
+}
+
+namespace world_modulation {
+    inline bool enabled = false;
+
+    inline bool edit_light = true;
+    inline bool edit_reflection = true;
+    inline bool edit_highlight = true;
+    inline bool edit_top_bottom = true;
+    inline bool edit_global_illum = true;
+    inline bool edit_magic = true;
+    inline bool edit_top_bottom_fog = true;
+    inline bool edit_sky = true;
+    inline bool edit_highlight2 = true;
+
+    inline ImVec4 light_rgb = { 1.f, 1.f, 1.f, 1.f };
+    inline ImVec4 reflection_rgb = { 1.f, 1.f, 1.f, 1.f };
+    inline ImVec4 highlight_rgb = { 1.f, 1.f, 1.f, 1.f };
+    inline ImVec4 top_bottom_rgb = { 1.f, 1.f, 1.f, 1.f };
+    inline ImVec4 global_illum_rgb = { 1.f, 1.f, 1.f, 1.f };
+    inline ImVec4 magic_rgb = { 1.f, 1.f, 1.f, 1.f };
+    inline ImVec4 top_bottom_fog_rgb = { 1.f, 1.f, 1.f, 1.f };
+    inline ImVec4 sky_rgb = { 1.f, 1.f, 1.f, 1.f };
+    inline ImVec4 highlight2_rgb = { 1.f, 1.f, 1.f, 1.f };
 }
 
 namespace RageBot

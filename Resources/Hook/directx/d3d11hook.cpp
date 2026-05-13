@@ -117,6 +117,8 @@ namespace d3d11 {
 
         IceBox::jitter_peek_tick( ImGui::GetIO( ).DeltaTime );
 
+        IceBox::chat_spammer_tick( );
+
 #ifdef _WIN64
         static bool s_aspect_toggle_last = false;
         static bool s_run_shoot_last = false;
@@ -175,7 +177,11 @@ namespace d3d11 {
         Render::user_interface( );
 
         if ( round_active ) {
+            IceBox::world_modulation_monitor_game( );
+
             IceBox::camera_fx_apply_fov( );
+
+            IceBox::world_modulation_apply( );
 
             IceBox::long_melee( visuals::LongMelee );
 
@@ -254,7 +260,10 @@ namespace d3d11 {
             if ( GetAsyncKeyState( VK_INSERT ) & 1 ) {
                 Render::menu_open = !Render::menu_open;
             }
-            if ( ( GetAsyncKeyState( VK_END ) & 1 ) || should_uninject ) break;
+            if ( ( GetAsyncKeyState( VK_END ) & 1 ) || should_uninject ) {
+                IceBox::world_modulation_prepare_uninject( );
+                break;
+            }
         }
 
         g_shutting_down = true;

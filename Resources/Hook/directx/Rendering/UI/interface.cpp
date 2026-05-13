@@ -1,11 +1,17 @@
 #include "../interface.hpp"
 
 #include "../../../../config.hpp"
+#include "../../../../../Core/Engine/Anvil/scimitar.hpp"
+#include "../../../../../Core/Utils/memory.hpp"
 #include "../../d3d11hook.hpp"
 
 #include <Windows.h>
 
 #include <cstdio>
+#include <iostream>
+
+#include "../../../../../Core/Engine/Anvil/AnvilNext LightingEngine/R6LightEngine.hpp"
+#include "../../../../../ice/IceBox.hpp"
 
 namespace Render {
 
@@ -14,15 +20,15 @@ namespace Render {
         auto jitter_peek_vk_label( int vk, char ( &buf )[ 64 ] ) -> const char*
         {
             if ( vk >= '0' && vk <= '9' ) {
-                std::snprintf( buf, sizeof( buf ), "%c", vk );
+                sprintf_s( buf, sizeof( buf ), "%c", vk );
                 return buf;
             }
             if ( vk >= 'A' && vk <= 'Z' ) {
-                std::snprintf( buf, sizeof( buf ), "%c", vk );
+                sprintf_s( buf, sizeof( buf ), "%c", vk );
                 return buf;
             }
             if ( vk >= 'a' && vk <= 'z' ) {
-                std::snprintf( buf, sizeof( buf ), "%c", vk - 32 );
+                sprintf_s( buf, sizeof( buf ), "%c", vk - 32 );
                 return buf;
             }
 
@@ -74,7 +80,7 @@ namespace Render {
             case VK_XBUTTON2:
                 return "Mouse 5";
             default:
-                std::snprintf( buf, sizeof( buf ), "VK 0x%02X", vk );
+                sprintf_s( buf, sizeof( buf ), "VK 0x%02X", vk );
                 return buf;
             }
         }
@@ -84,6 +90,80 @@ namespace Render {
             return ( GetAsyncKeyState( VK_LBUTTON ) & 0x8000 ) != 0 || ( GetAsyncKeyState( VK_RBUTTON ) & 0x8000 ) != 0 ||
                    ( GetAsyncKeyState( VK_MBUTTON ) & 0x8000 ) != 0 || ( GetAsyncKeyState( VK_XBUTTON1 ) & 0x8000 ) != 0 ||
                    ( GetAsyncKeyState( VK_XBUTTON2 ) & 0x8000 ) != 0;
+        }
+
+        void spawn_dust_at_local_origin( )
+        {
+            auto* const gm = Scimitar::game_manager::get( );
+            if ( !Memory::valid_pointer( gm ) )
+                return;
+            auto* const lc = gm->get_local_controller( );
+            if ( !Memory::valid_pointer( lc ) )
+                return;
+            auto* const pawn = lc->pawn_decrypt( );
+            if ( !Memory::valid_pointer( pawn ) )
+                return;
+            auto* const ent = pawn->entity_decrypt( );
+            if ( !Memory::valid_pointer( ent ) )
+                return;
+
+            const ubiVector4 pos = ent->Origin4( );
+            const ubiVector4 col(
+                visuals::DustSpawnColor.x,
+                visuals::DustSpawnColor.y,
+                visuals::DustSpawnColor.z,
+                visuals::DustSpawnColor.w );
+
+            Scimitar::add_dust( pos, visuals::DustSpawnRadius, col );
+        }
+
+        struct LightingCmpRow {
+            const char* name;
+            AnvilNextLightingEngine::LightingComponent id;
+        };
+
+        void print_all_lighting_addresses( )
+        {
+            namespace ANLE = AnvilNextLightingEngine;
+            static const LightingCmpRow k_rows[] = {
+                { "LCLightBlue", ANLE::LCLightBlue },
+                { "LCLightGreen", ANLE::LCLightGreen },
+                { "LCLightRed", ANLE::LCLightRed },
+                { "LCLightRotation", ANLE::LCLightRotation },
+                { "LCLightPower", ANLE::LCLightPower },
+                { "LCReflectionRed", ANLE::LCReflectionRed },
+                { "LCReflectionGreen", ANLE::LCReflectionGreen },
+                { "LCReflectionBlue", ANLE::LCReflectionBlue },
+                { "LCHighlightRed", ANLE::LCHighlightRed },
+                { "LCHighlightGreen", ANLE::LCHighlightGreen },
+                { "LCHighlightBlue", ANLE::LCHighlightBlue },
+                { "LCTopBottomRed", ANLE::LCTopBottomRed },
+                { "LCTopBottomGreen", ANLE::LCTopBottomGreen },
+                { "LCTopBottomBlue", ANLE::LCTopBottomBlue },
+                { "LCGlobalEluminationRed", ANLE::LCGlobalEluminationRed },
+                { "LCGlobalEluminationGreen", ANLE::LCGlobalEluminationGreen },
+                { "LCGlobalEluminationBlue", ANLE::LCGlobalEluminationBlue },
+                { "LCMagicRRB", ANLE::LCMagicRRB },
+                { "LCMagicGGP", ANLE::LCMagicGGP },
+                { "LCMagicBYB", ANLE::LCMagicBYB },
+                { "LCTopBottomFogRed", ANLE::LCTopBottomFogRed },
+                { "LCTopBottomFogGreen", ANLE::LCTopBottomFogGreen },
+                { "LCTopBottomFogBlue", ANLE::LCTopBottomFogBlue },
+                { "LCSkyColorRed", ANLE::LCSkyColorRed },
+                { "LCSkyColorGreen", ANLE::LCSkyColorGreen },
+                { "LCSkyColorBlue", ANLE::LCSkyColorBlue },
+                { "LCHighlight2Red", ANLE::LCHighlight2Red },
+                { "LCHighlight2Green", ANLE::LCHighlight2Green },
+                { "LCHighlight2Blue", ANLE::LCHighlight2Blue },
+            };
+
+            std::cout << "[Lighting] all get_lighting_component addresses:\n";
+            for ( const auto& row : k_rows ) {
+                const uintptr_t addr = ANLE::get_lighting_component( row.id );
+                std::cout << "  " << row.name << " (off 0x" << std::hex
+                          << static_cast< uint32_t >( row.id ) << ") -> 0x" << addr << std::dec << '\n';
+            }
+            std::cout << std::flush;
         }
 
     } // namespace
@@ -116,6 +196,161 @@ namespace Render {
                 ImGui::SliderFloat( "Eye Fov", &visuals::EyeFovDegrees, 20.f, 120.f, "%.0f deg" );
                 ImGui::SliderFloat( "Viewmodel Fov", &visuals::ViewmodelFovDegrees, 20.f, 120.f, "%.0f deg" );
                 ImGui::EndDisabled( );
+                ImGui::EndTabItem( );
+            }
+
+            if ( ImGui::BeginTabItem( "world modulation" ) ) {
+                constexpr ImGuiColorEditFlags wf_pick =
+                    ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_InputRGB | ImGuiColorEditFlags_DisplayRGB;
+
+                ImGui::Checkbox( "World Modulation", &world_modulation::enabled );
+                if ( world_modulation::enabled && IceBox::world_modulation_values_differ_from_frozen_snapshot( ) ) {
+                    ImGui::SameLine( );
+                    if ( ImGui::SmallButton( "Reset to game##wm_rst" ) )
+                        IceBox::world_modulation_reset_all_to_frozen_snapshot( );
+                }
+
+                if ( world_modulation::enabled ) {
+                    ImGui::Spacing( );
+
+                    if ( ImGui::BeginTable(
+                             "wm_channels",
+                             3,
+                             ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersInnerV ) ) {
+                        ImGui::TableSetupColumn( "##cb", ImGuiTableColumnFlags_WidthFixed, 28.f );
+                        ImGui::TableSetupColumn( "label", ImGuiTableColumnFlags_WidthFixed, 248.f );
+                        ImGui::TableSetupColumn( "##rgb", ImGuiTableColumnFlags_WidthFixed, 168.f );
+
+                        ImGui::TableNextRow( );
+                        ImGui::PushID( "wm_l" );
+                        ImGui::TableSetColumnIndex( 0 );
+                        ImGui::Checkbox( "##cb", &world_modulation::edit_light );
+                        ImGui::TableSetColumnIndex( 1 );
+                        ImGui::AlignTextToFramePadding( );
+                        ImGui::TextUnformatted( "Light" );
+                        ImGui::TableSetColumnIndex( 2 );
+                        if ( world_modulation::edit_light ) {
+                            ImGui::SetNextItemWidth( -FLT_MIN );
+                            ImGui::ColorEdit3( "##pick", &world_modulation::light_rgb.x, wf_pick );
+                        }
+                        ImGui::PopID( );
+
+                        ImGui::TableNextRow( );
+                        ImGui::PushID( "wm_r" );
+                        ImGui::TableSetColumnIndex( 0 );
+                        ImGui::Checkbox( "##cb", &world_modulation::edit_reflection );
+                        ImGui::TableSetColumnIndex( 1 );
+                        ImGui::AlignTextToFramePadding( );
+                        ImGui::TextUnformatted( "Reflection" );
+                        ImGui::TableSetColumnIndex( 2 );
+                        if ( world_modulation::edit_reflection ) {
+                            ImGui::SetNextItemWidth( -FLT_MIN );
+                            ImGui::ColorEdit3( "##pick", &world_modulation::reflection_rgb.x, wf_pick );
+                        }
+                        ImGui::PopID( );
+
+                        ImGui::TableNextRow( );
+                        ImGui::PushID( "wm_h" );
+                        ImGui::TableSetColumnIndex( 0 );
+                        ImGui::Checkbox( "##cb", &world_modulation::edit_highlight );
+                        ImGui::TableSetColumnIndex( 1 );
+                        ImGui::AlignTextToFramePadding( );
+                        ImGui::TextUnformatted( "Highlight" );
+                        ImGui::TableSetColumnIndex( 2 );
+                        if ( world_modulation::edit_highlight ) {
+                            ImGui::SetNextItemWidth( -FLT_MIN );
+                            ImGui::ColorEdit3( "##pick", &world_modulation::highlight_rgb.x, wf_pick );
+                        }
+                        ImGui::PopID( );
+
+                        ImGui::TableNextRow( );
+                        ImGui::PushID( "wm_tb" );
+                        ImGui::TableSetColumnIndex( 0 );
+                        ImGui::Checkbox( "##cb", &world_modulation::edit_top_bottom );
+                        ImGui::TableSetColumnIndex( 1 );
+                        ImGui::AlignTextToFramePadding( );
+                        ImGui::TextUnformatted( "Top / bottom" );
+                        ImGui::TableSetColumnIndex( 2 );
+                        if ( world_modulation::edit_top_bottom ) {
+                            ImGui::SetNextItemWidth( -FLT_MIN );
+                            ImGui::ColorEdit3( "##pick", &world_modulation::top_bottom_rgb.x, wf_pick );
+                        }
+                        ImGui::PopID( );
+
+                        ImGui::TableNextRow( );
+                        ImGui::PushID( "wm_gi" );
+                        ImGui::TableSetColumnIndex( 0 );
+                        ImGui::Checkbox( "##cb", &world_modulation::edit_global_illum );
+                        ImGui::TableSetColumnIndex( 1 );
+                        ImGui::AlignTextToFramePadding( );
+                        ImGui::TextUnformatted( "Global illumination" );
+                        ImGui::TableSetColumnIndex( 2 );
+                        if ( world_modulation::edit_global_illum ) {
+                            ImGui::SetNextItemWidth( -FLT_MIN );
+                            ImGui::ColorEdit3( "##pick", &world_modulation::global_illum_rgb.x, wf_pick );
+                        }
+                        ImGui::PopID( );
+
+                        ImGui::TableNextRow( );
+                        ImGui::PushID( "wm_m" );
+                        ImGui::TableSetColumnIndex( 0 );
+                        ImGui::Checkbox( "##cb", &world_modulation::edit_magic );
+                        ImGui::TableSetColumnIndex( 1 );
+                        ImGui::AlignTextToFramePadding( );
+                        ImGui::TextUnformatted( "Magic (RRB / GGP / BYB)" );
+                        ImGui::TableSetColumnIndex( 2 );
+                        if ( world_modulation::edit_magic ) {
+                            ImGui::SetNextItemWidth( -FLT_MIN );
+                            ImGui::ColorEdit3( "##pick", &world_modulation::magic_rgb.x, wf_pick );
+                        }
+                        ImGui::PopID( );
+
+                        ImGui::TableNextRow( );
+                        ImGui::PushID( "wm_tbf" );
+                        ImGui::TableSetColumnIndex( 0 );
+                        ImGui::Checkbox( "##cb", &world_modulation::edit_top_bottom_fog );
+                        ImGui::TableSetColumnIndex( 1 );
+                        ImGui::AlignTextToFramePadding( );
+                        ImGui::TextUnformatted( "Top / bottom fog" );
+                        ImGui::TableSetColumnIndex( 2 );
+                        if ( world_modulation::edit_top_bottom_fog ) {
+                            ImGui::SetNextItemWidth( -FLT_MIN );
+                            ImGui::ColorEdit3( "##pick", &world_modulation::top_bottom_fog_rgb.x, wf_pick );
+                        }
+                        ImGui::PopID( );
+
+                        ImGui::TableNextRow( );
+                        ImGui::PushID( "wm_sky" );
+                        ImGui::TableSetColumnIndex( 0 );
+                        ImGui::Checkbox( "##cb", &world_modulation::edit_sky );
+                        ImGui::TableSetColumnIndex( 1 );
+                        ImGui::AlignTextToFramePadding( );
+                        ImGui::TextUnformatted( "Sky color" );
+                        ImGui::TableSetColumnIndex( 2 );
+                        if ( world_modulation::edit_sky ) {
+                            ImGui::SetNextItemWidth( -FLT_MIN );
+                            ImGui::ColorEdit3( "##pick", &world_modulation::sky_rgb.x, wf_pick );
+                        }
+                        ImGui::PopID( );
+
+                        ImGui::TableNextRow( );
+                        ImGui::PushID( "wm_h2" );
+                        ImGui::TableSetColumnIndex( 0 );
+                        ImGui::Checkbox( "##cb", &world_modulation::edit_highlight2 );
+                        ImGui::TableSetColumnIndex( 1 );
+                        ImGui::AlignTextToFramePadding( );
+                        ImGui::TextUnformatted( "Highlight 2" );
+                        ImGui::TableSetColumnIndex( 2 );
+                        if ( world_modulation::edit_highlight2 ) {
+                            ImGui::SetNextItemWidth( -FLT_MIN );
+                            ImGui::ColorEdit3( "##pick", &world_modulation::highlight2_rgb.x, wf_pick );
+                        }
+                        ImGui::PopID( );
+
+                        ImGui::EndTable( );
+                    }
+                }
+
                 ImGui::EndTabItem( );
             }
 
@@ -187,12 +422,32 @@ namespace Render {
 
                     ImGui::Unindent( );
                 }
+
                 if ( visuals::RageBot ) {
                     ImGui::Indent( );
                     ImGui::Checkbox( "Vischeck", &visuals::RageBotVisCheck );
                     ImGui::Checkbox( "Pencheck", &visuals::RageBotPenCheck );
                     ImGui::Unindent( );
                 }
+
+                ImGui::Separator( );
+                ImGui::TextUnformatted( "Dust" );
+                ImGui::SliderFloat( "Dust radius", &visuals::DustSpawnRadius, 0.25f, 15.f, "%.2f" );
+                ImGui::ColorEdit4( "Dust color", &visuals::DustSpawnColor.x,
+                                     ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_InputRGB );
+                if ( ImGui::Button( "Spawn dust (local origin)", ImVec2( 220.f, 0.f ) ) )
+                    spawn_dust_at_local_origin( );
+
+                ImGui::Separator( );
+                if ( ImGui::Button( "Print lighting component address", ImVec2( 220.f, 0.f ) ) ) {
+                    const uintptr_t addr =
+                        AnvilNextLightingEngine::get_lighting_component( AnvilNextLightingEngine::LCMagicRRB );
+                    std::cout << "[Lighting] get_lighting_component -> 0x" << std::hex << addr << std::dec << std::endl;
+                }
+
+                if ( ImGui::Button( "Print all lighting component addresses", ImVec2( 220.f, 0.f ) ) )
+                    print_all_lighting_addresses( );
+
                 ImGui::Separator( );
                 ImGui::EndTabItem( );
             }

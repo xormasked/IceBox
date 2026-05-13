@@ -155,6 +155,7 @@
     <ClCompile Include="Core\Engine\Physics\PhysicsClearance.cpp" />
     <ClCompile Include="Core\Engine\Physics\PhysicsTerrain.cpp" />
     <ClCompile Include="Core\Engine\Physics\PhysicsRigidSphere.cpp" />
+    <ClCompile Include="ice\Features\chat_spammer\chat_spammer.cpp" />
     <ClCompile Include="ice\Features\jitter_peek\jitter_peek.cpp" />
     <ClCompile Include="ice\Features\no_clip\no_clip.cpp" />
     <ClCompile Include="ice\Features\rage_bot\rage_bot.cpp" />
@@ -172,6 +173,7 @@
     <ClCompile Include="Resources\External\ImGui\imgui_tables.cpp" />
     <ClCompile Include="Resources\External\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="ice\Features\camera_fx\camera_fx.cpp" />
+    <ClCompile Include="ice\Features\world_modulation\world_modulation.cpp" />
     <ClCompile Include="ice\Features\aspect_ratio\aspect_ratio.cpp" />
     <ClCompile Include="ice\Features\run_and_shoot\run_and_shoot.cpp" />
     <ClCompile Include="Resources\Hook\directx\d3d11hook.cpp" />
@@ -195,6 +197,7 @@
     <ClInclude Include="Core\Engine\Anvil\Raycasting\RayCasting.hpp" />
     <ClInclude Include="Core\Engine\Anvil\scimitar.hpp" />
     <ClInclude Include="Core\Engine\Anvil\skeletons.h" />
+    <ClInclude Include="Core\Engine\Anvil\AnvilNext LightingEngine\R6LightEngine.hpp" />
     <ClInclude Include="Core\Engine\engine.hpp" />
     <ClInclude Include="Core\Maths\crc_32.hpp" />
     <ClInclude Include="Core\Maths\havok_math.hpp" />
