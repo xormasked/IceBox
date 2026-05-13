@@ -72,23 +72,48 @@ struct HookVars {
 		c_option bullet_tracers;
 	} aim;
 
+	struct misc_movement_vars {
+		bool third_person = false;
+		int third_person_vk = 'V';
+	};
+
+	struct misc_jitter_peek_vars {
+		bool enabled = false;
+		int vk = 'G';
+		int delay_ms = 80;
+	};
+
+	struct misc_camera_vars {
+		bool fov_editor_enabled = false;
+		float eye_fov_degrees = 90.f;
+		float viewmodel_fov_degrees = 50.f;
+	};
+
+	struct misc_cheat_hooks_vars {
+		bool unlock_all = false;
+		bool better_light = false;
+	};
+
 	struct misc_settings {
 		bool no_recoil = false;
 		bool no_weapon_spread = false;
 		bool run_and_shoot = false;
 		c_option long_melee;
 
+		misc_movement_vars movement;
+		misc_jitter_peek_vars jitter_peek;
+		misc_camera_vars camera;
+		misc_cheat_hooks_vars cheats;
+
 		c_option aspect_ratio_changer;
 		float aspect_ratio = 1.5f;
-
-		c_option fov_changer;
-		int camera_fov = 90;
 
 		c_option instant_revive;
 	} misc;
 
 	struct rage_bot_settings {
 		bool on = false;
+		bool test = false;
 		bool vischeck = false;
 		bool pencheck = false;
 		int delay_ms = 0;
@@ -98,6 +123,8 @@ struct HookVars {
 		rage_bot_settings rage_bot;
 	} combat;
 
+	// Packed mirror of visuals:: — filled by sync_hook_vars_from_game / merge_menu_into_visual_runtime / push.
+	// Prefer editing grouped structs above (esp, aim, misc.*, combat, world) from UI / features.
 	struct hook_visual_runtime {
 		bool rage_bot = false;
 		bool rage_bot_vis_check = true;

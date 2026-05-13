@@ -152,9 +152,19 @@ namespace {
 		h.misc.aspect_ratio_changer.state = v.aspect_ratio_hook;
 		h.misc.aspect_ratio = v.aspect_ratio;
 
-		h.misc.fov_changer.state = v.fov_enabled;
-		h.misc.camera_fov =
-			static_cast< int >( std::lround( std::clamp( v.eye_fov_degrees, 70.f, 160.f ) ) );
+		h.misc.camera.fov_editor_enabled = v.fov_enabled;
+		h.misc.camera.eye_fov_degrees = v.eye_fov_degrees;
+		h.misc.camera.viewmodel_fov_degrees = v.viewmodel_fov_degrees;
+
+		h.misc.movement.third_person = v.third_person;
+		h.misc.movement.third_person_vk = v.third_person_vk;
+
+		h.misc.jitter_peek.enabled = v.jitter_peek;
+		h.misc.jitter_peek.vk = v.jitter_peek_vk;
+		h.misc.jitter_peek.delay_ms = v.jitter_peek_delay_ms;
+
+		h.misc.cheats.unlock_all = v.unlock_all_mid_hook;
+		h.misc.cheats.better_light = v.better_light;
 
 		h.misc.instant_revive.state = v.self_revive;
 		h.misc.instant_revive.keybind.key = v.self_revive_vk;
@@ -195,8 +205,19 @@ namespace {
 		v.aspect_ratio_hook = h.misc.aspect_ratio_changer.state;
 		v.aspect_ratio = h.misc.aspect_ratio;
 
-		v.eye_fov_degrees = std::clamp( v.eye_fov_degrees, 70.f, 160.f );
-		v.viewmodel_fov_degrees = std::clamp( v.viewmodel_fov_degrees, 1.f, 120.f );
+		v.third_person = h.misc.movement.third_person;
+		v.third_person_vk = h.misc.movement.third_person_vk;
+
+		v.jitter_peek = h.misc.jitter_peek.enabled;
+		v.jitter_peek_vk = h.misc.jitter_peek.vk;
+		v.jitter_peek_delay_ms = h.misc.jitter_peek.delay_ms;
+
+		v.fov_enabled = h.misc.camera.fov_editor_enabled;
+		v.eye_fov_degrees = std::clamp( h.misc.camera.eye_fov_degrees, 70.f, 160.f );
+		v.viewmodel_fov_degrees = std::clamp( h.misc.camera.viewmodel_fov_degrees, 1.f, 120.f );
+
+		v.unlock_all_mid_hook = h.misc.cheats.unlock_all;
+		v.better_light = h.misc.cheats.better_light;
 
 		v.self_revive = h.misc.instant_revive.state;
 		v.self_revive_vk = h.misc.instant_revive.keybind.key;

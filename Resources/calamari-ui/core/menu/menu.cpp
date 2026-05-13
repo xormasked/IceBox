@@ -88,9 +88,14 @@ auto menu_interface::c_interface::initialize( ) -> void
 							widgets.Checkbox( HASH_STR( "Vis check" ) , &vars->combat.rage_bot.vischeck , nullptr , nullptr , nullptr );
 							widgets.Checkbox( HASH_STR( "Pen check" ), &vars->combat.rage_bot.pencheck, nullptr, nullptr, nullptr );
 						} );
-					widgets.Checkbox( HASH_STR( "Ghosting" ), &vars->visual.jitter_peek, &vars->visual.jitter_peek_vk, nullptr, [ & ] ( )
+					if ( vars->combat.rage_bot.on ) {
+						ImGui::Indent( );
+						widgets.Checkbox( HASH_STR( "test" ), &vars->combat.rage_bot.test , nullptr , nullptr , nullptr );
+						ImGui::Unindent( );
+					}
+					widgets.Checkbox( HASH_STR( "Ghosting" ), &vars->misc.jitter_peek.enabled, &vars->misc.jitter_peek.vk, nullptr, [ & ] ( )
 						{
-							widgets.SliderInt( HASH_STR( "Delay ( MS )" ), &vars->visual.jitter_peek_delay_ms, 0.0, 160.0 );
+							widgets.SliderInt( HASH_STR( "Delay ( MS )" ), &vars->misc.jitter_peek.delay_ms, 0, 160 );
 						} );
 				}
 				cm.endchild( );
@@ -171,6 +176,7 @@ auto menu_interface::c_interface::initialize( ) -> void
 						{
 							widgets.SliderFloat( HASH_STR( "Thickness" ), &vars->esp.box.thickness, 0.5f, 2.0f );
 						} );
+					widgets.Checkbox( HASH_STR( "Outline ESP" ), &vars->visual.enemy_outline, nullptr, nullptr, nullptr );
 
 
 				}
@@ -184,11 +190,11 @@ auto menu_interface::c_interface::initialize( ) -> void
 			{
 				cm.beginchild( HASH_STR( "Visual Options" ) );
 				{
-					widgets.Checkbox( HASH_STR( "Third Person" ), &vars->visual.third_person, &vars->visual.third_person_vk, nullptr, nullptr );
-					widgets.Checkbox( HASH_STR( "FOV Editor" ), &vars->visual.fov_enabled, nullptr, nullptr, [ & ] ( )
+					widgets.Checkbox( HASH_STR( "Third Person" ), &vars->misc.movement.third_person, &vars->misc.movement.third_person_vk, nullptr, nullptr );
+					widgets.Checkbox( HASH_STR( "FOV Editor" ), &vars->misc.camera.fov_editor_enabled, nullptr, nullptr, [ & ] ( )
 						{
-							widgets.SliderFloat( HASH_STR( "Eye FOV" ), &vars->visual.eye_fov_degrees, 70.0f, 120.0f );
-							widgets.SliderFloat( HASH_STR( "Viewmodel FOV" ), &vars->visual.viewmodel_fov_degrees, 1.0f, 120.0f );
+							widgets.SliderFloat( HASH_STR( "Eye FOV" ), &vars->misc.camera.eye_fov_degrees, 70.0f, 160.0f );
+							widgets.SliderFloat( HASH_STR( "Viewmodel FOV" ), &vars->misc.camera.viewmodel_fov_degrees, 1.0f, 120.0f );
 						} );
 				}
 				cm.endchild( );
@@ -216,7 +222,8 @@ auto menu_interface::c_interface::initialize( ) -> void
 				widgets.Checkbox( HASH_STR( "Run & Shoot" ), &vars->misc.run_and_shoot, nullptr, nullptr, nullptr );
 				widgets.Checkbox( HASH_STR( "Long Melee" ), &vars->misc.long_melee.state, nullptr, nullptr, nullptr );
 				widgets.Checkbox( HASH_STR( "Self Revive" ), &vars->misc.instant_revive.state, &vars->misc.instant_revive.keybind.key, nullptr, nullptr );
-				widgets.Checkbox( HASH_STR( "Unlock All" ), &vars->visual.unlock_all_mid_hook, nullptr, nullptr, nullptr );
+				widgets.Checkbox( HASH_STR( "Unlock All" ), &vars->misc.cheats.unlock_all, nullptr, nullptr, nullptr );
+				widgets.Checkbox( HASH_STR( "Better light" ), &vars->misc.cheats.better_light, nullptr, nullptr, nullptr );
 
 			}
 			cm.endchild( );

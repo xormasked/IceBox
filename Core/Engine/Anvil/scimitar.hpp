@@ -489,3 +489,38 @@ namespace Scimitar {
     }
 }
 
+//namespace general {
+//
+//    namespace Ragebot {
+//        Ragebot;
+//        Silent Aim;
+//        Memory Aimbot;
+//
+//        Silent Aim HitChance;
+//
+//        Hitbox Selection.
+//    }
+//
+//    namespace AimbotSettings {
+//        Show Fov Circle( size color );
+//        target option;
+//    }
+//    
+//    namespace RageBotSettings {
+//        Ragebot Delay;
+//        shoot type;
+//
+//        prioritize;
+//        bullet tracers;
+//    }
+//
+//    namespace visuals {
+//        skeleton;
+//        operator;
+//        health;
+//        name;
+//        box;
+//        outline;
+//
+//    }
+//}
