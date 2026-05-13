@@ -1573,6 +1573,25 @@ static float CalcMaxPopupHeightFromItemCount(int items_count)
     return (g.FontSize + g.Style.ItemSpacing.y) * items_count - g.Style.ItemSpacing.y + (g.Style.WindowPadding.y * 2);
 }
 
+// IceBox: clockwise spin vs default down chevron (`RenderArrow(ImGuiDir_Down)` verts); spin01==1 => pointing up (open).
+static void IceRenderComboArrow(ImDrawList* draw_list, ImVec2 pos, ImU32 col, float scale, float spin01)
+{
+    const float h = draw_list->_Data->FontSize * 1.00f;
+    float r = h * 0.40f * scale;
+    const ImVec2 center = pos + ImVec2(h * 0.50f, h * 0.50f * scale);
+    ImVec2 a = ImVec2(+0.000f, +0.750f) * r;
+    ImVec2 b = ImVec2(-0.866f, -0.750f) * r;
+    ImVec2 c = ImVec2(+0.866f, -0.750f) * r;
+    const float theta = spin01 * IM_PI;
+    const float cos_th = ImCos(theta);
+    const float sin_th = ImSin(theta);
+    draw_list->AddTriangleFilled(
+        center + ImRotate(a, cos_th, -sin_th),
+        center + ImRotate(b, cos_th, -sin_th),
+        center + ImRotate(c, cos_th, -sin_th),
+        col);
+}
+
 bool ImGui::BeginCombo(const char* label, const char* preview_value, ImGuiComboFlags flags)
 {
     ImGuiContext& g = *GImGui;
@@ -1581,7 +1600,10 @@ bool ImGui::BeginCombo(const char* label, const char* preview_value, ImGuiComboF
     ImGuiNextWindowDataFlags backup_next_window_data_flags = g.NextWindowData.Flags;
     g.NextWindowData.ClearFlags(); // We behave like Begin() and need to consume those values
     if (window->SkipItems)
+    {
+        g.BeginComboLayoutPushHeight = 0.f;
         return false;
+    }
 
     const ImGuiStyle& style = g.Style;
     const ImGuiID id = window->GetID(label);
@@ -1594,7 +1616,10 @@ bool ImGui::BeginCombo(const char* label, const char* preview_value, ImGuiComboF
     const ImRect total_bb(bb.Min, bb.Max + ImVec2(label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f, 0.0f));
     ItemSize(total_bb, style.FramePadding.y);
     if (!ItemAdd(total_bb, id, &bb))
+    {
+        g.BeginComboLayoutPushHeight = 0.f;
         return false;
+    }
 
     // Open on click
     bool hovered, held;
@@ -1606,6 +1631,14 @@ bool ImGui::BeginCombo(const char* label, const char* preview_value, ImGuiComboF
         OpenPopupEx(popup_id, ImGuiPopupFlags_None);
         popup_open = true;
     }
+
+    const ImGuiID ice_combo_spin_key = ImHashData(&popup_id, sizeof(popup_id), 0xC00C0110u);
+    float spin_u = window->StateStorage.GetFloat(ice_combo_spin_key, popup_open ? 1.f : 0.f);
+    const float spin_target = popup_open ? 1.f : 0.f;
+    spin_u += (spin_target - spin_u) * ImMin(ImMax(g.IO.DeltaTime * 22.f, 0.f), 1.f);
+    if (ImFabs(spin_target - spin_u) < 0.003f)
+        spin_u = spin_target;
+    window->StateStorage.SetFloat(ice_combo_spin_key, spin_u);
 
     // Render shape
     const ImU32 frame_col = GetColorU32(hovered ? ImGuiCol_FrameBgHovered : ImGuiCol_FrameBg);
@@ -1619,7 +1652,7 @@ bool ImGui::BeginCombo(const char* label, const char* preview_value, ImGuiComboF
         ImU32 text_col = GetColorU32(ImGuiCol_Text);
         window->DrawList->AddRectFilled(ImVec2(value_x2, bb.Min.y), bb.Max, bg_col, style.FrameRounding, (w <= arrow_size) ? ImDrawFlags_RoundCornersAll : ImDrawFlags_RoundCornersRight);
         if (value_x2 + arrow_size - style.FramePadding.x <= bb.Max.x)
-            RenderArrow(window->DrawList, ImVec2(value_x2 + style.FramePadding.y, bb.Min.y + style.FramePadding.y), text_col, ImGuiDir_Down, 1.0f);
+            IceRenderComboArrow(window->DrawList, ImVec2(value_x2 + style.FramePadding.y, bb.Min.y + style.FramePadding.y), text_col, 1.0f, spin_u);
     }
     RenderFrameBorder(bb.Min, bb.Max, style.FrameRounding);
 
@@ -1640,6 +1673,16 @@ bool ImGui::BeginCombo(const char* label, const char* preview_value, ImGuiComboF
     }
     if (label_size.x > 0)
         RenderText(ImVec2(bb.Max.x + style.ItemInnerSpacing.x, bb.Min.y + style.FramePadding.y), label);
+
+    float reserve_full = 0.f;
+    if (g.BeginComboLayoutPushHeight > 0.0f)
+    {
+        reserve_full = g.BeginComboLayoutPushHeight;
+        g.BeginComboLayoutPushHeight = 0.0f;
+    }
+    const float reserve_px = reserve_full * spin_u;
+    if (reserve_px > 1.0f)
+        Dummy(ImVec2(0.0f, reserve_px));
 
     if (!popup_open)
         return false;
@@ -3062,7 +3105,8 @@ bool ImGui::SliderScalar(const char* label, ImGuiDataType data_type, void* p_dat
     }
 
     // Draw frame
-    const ImU32 frame_col = GetColorU32(g.ActiveId == id ? ImGuiCol_FrameBgActive : hovered ? ImGuiCol_FrameBgHovered : ImGuiCol_FrameBg);
+    // Track stays idle-dark on hover (no redder FrameBgHovered wash); FrameBgActive only while dragging/scrubbing.
+    const ImU32 frame_col = GetColorU32(g.ActiveId == id ? ImGuiCol_FrameBgActive : ImGuiCol_FrameBg);
     RenderNavHighlight(frame_bb, id);
     RenderFrame(frame_bb.Min, frame_bb.Max, frame_col, true, g.Style.FrameRounding);
 
@@ -3072,9 +3116,26 @@ bool ImGui::SliderScalar(const char* label, ImGuiDataType data_type, void* p_dat
     if (value_changed)
         MarkItemEdited(id);
 
-    // Render grab
+    // Gradient is authored across full track width; clip to current fill so low values show mostly red, high values reveal the full fade.
     if (grab_bb.Max.x > grab_bb.Min.x)
-        window->DrawList->AddRectFilled(grab_bb.Min, grab_bb.Max, GetColorU32(g.ActiveId == id ? ImGuiCol_SliderGrabActive : ImGuiCol_SliderGrab), style.GrabRounding);
+    {
+        const ImU32 col_left = IM_COL32(237, 25, 40, 255);
+        const ImU32 col_right = IM_COL32(255, 85, 175, 255);
+        const float gx = IM_ROUND(ImClamp(0.5f * (grab_bb.Min.x + grab_bb.Max.x), frame_bb.Min.x, frame_bb.Max.x));
+        const float pin_w = ImMax(style.GrabMinSize * 0.22f, 3.f);
+        const float pin_half = pin_w * 0.5f;
+        // End fill at SliderBehavior grab right edge; +2 restores grab_padding inset so tracks flush with frame_bb.Max.x.
+        const float fill_x = IM_ROUND(ImClamp(grab_bb.Max.x + 2.f, frame_bb.Min.x, frame_bb.Max.x));
+        window->DrawList->PushClipRect(frame_bb.Min, frame_bb.Max, true);
+        window->DrawList->AddRectFilled(ImVec2(IM_ROUND(gx - pin_half), frame_bb.Min.y), ImVec2(IM_ROUND(gx + pin_half), frame_bb.Max.y), col_left);
+        if (fill_x > frame_bb.Min.x)
+        {
+            window->DrawList->PushClipRect(frame_bb.Min, ImVec2(fill_x, frame_bb.Max.y), true);
+            window->DrawList->AddRectFilledMultiColor(frame_bb.Min, frame_bb.Max, col_left, col_right, col_right, col_left);
+            window->DrawList->PopClipRect();
+        }
+        window->DrawList->PopClipRect();
+    }
 
     // Display value using user-provided display format so user can add prefix/suffix/decorations to the value.
     char value_buf[64];
@@ -8059,6 +8120,7 @@ bool    ImGui::TabItemEx(ImGuiTabBar* tab_bar, const char* label, bool* p_open, 
         window->DC.CursorPos = tab_bar->BarRect.Min + ImVec2(tab->Offset, 0.0f);
     ImVec2 pos = window->DC.CursorPos;
     ImRect bb(pos, pos + size);
+    const ImGuiID ice_tab_rip_key = ImHashData(&id, sizeof(ImGuiID), tab_bar->ID ^ 0x9E3779B9u);
 
     // We don't have CPU clipping primitives to clip the CloseButton (until it becomes a texture), so need to add an extra draw call (temporary in the case of vertical animation)
     const bool want_clip_rect = is_central_section && (bb.Min.x < tab_bar->ScrollingRectMinX || bb.Max.x > tab_bar->ScrollingRectMaxX);
@@ -8084,7 +8146,10 @@ bool    ImGui::TabItemEx(ImGuiTabBar* tab_bar, const char* label, bool* p_open, 
     bool hovered, held;
     bool pressed = ButtonBehavior(bb, id, &hovered, &held, button_flags);
     if (pressed && !is_tab_button)
+    {
         tab_bar->NextSelectedTabId = id;
+        window->StateStorage.SetFloat(ice_tab_rip_key, (float)g.Time);
+    }
 
     // Allow the close button to overlap unless we are dragging (in which case we don't want any overlapping tabs to be hovered)
     if (g.ActiveId != id)
@@ -8117,11 +8182,43 @@ bool    ImGui::TabItemEx(ImGuiTabBar* tab_bar, const char* label, bool* p_open, 
     }
 #endif
 
-    // Render tab shape
+    // Render tab shape (IceBox: LMB tab click runs red ripple top->down, ease-out 0.34s like slider reveal; inactive hover keeps static gradient)
     ImDrawList* display_draw_list = window->DrawList;
-    const ImU32 tab_col = GetColorU32((held || hovered) ? ImGuiCol_TabHovered : tab_contents_visible ? (tab_bar_focused ? ImGuiCol_TabActive : ImGuiCol_TabUnfocusedActive) : (tab_bar_focused ? ImGuiCol_Tab : ImGuiCol_TabUnfocused));
-    TabItemBackground(display_draw_list, bb, flags, tab_col);
-    RenderNavHighlight(bb, id);
+    const bool tab_hovered_vis = ( held || hovered );
+    const ImU32 tab_col_base = GetColorU32( tab_contents_visible ? ( tab_bar_focused ? ImGuiCol_TabActive : ImGuiCol_TabUnfocusedActive )
+                                                                 : ( tab_bar_focused ? ImGuiCol_Tab : ImGuiCol_TabUnfocused ) );
+    TabItemBackground( display_draw_list, bb, flags, tab_col_base );
+
+    constexpr float k_ice_tab_rip_dur = 0.34f;
+    const float rip_t0 = window->StateStorage.GetFloat( ice_tab_rip_key, -1.f );
+    float rip_eased = 1.f;
+    bool rip_animating = false;
+    if ( !is_tab_button && rip_t0 >= 0.f ) {
+        const float u_lin = ImMin( ( float ) ( ( g.Time - rip_t0 ) / k_ice_tab_rip_dur ), 1.f );
+        rip_eased = 1.f - ImPow( 1.f - u_lin, 3.f );
+        rip_animating = ( u_lin < 1.f );
+        if ( !rip_animating )
+            window->StateStorage.SetFloat( ice_tab_rip_key, -1.f );
+    }
+
+    if ( !is_tab_button ) {
+        const float y0 = bb.Min.y + 1.0f;
+        const float y1 = bb.Max.y - 1.0f;
+        const ImU32 c_top = IM_COL32( 255, 38, 48, 210 );
+        const ImU32 c_bot = IM_COL32( 255, 38, 48, 0 );
+        if ( rip_animating ) {
+            const float clip_y = ImLerp( y0, y1, rip_eased );
+            display_draw_list->PushClipRect( ImVec2( bb.Min.x, y0 - 1.f ), ImVec2( bb.Max.x, clip_y ), true );
+            display_draw_list->AddRectFilledMultiColor( ImVec2( bb.Min.x, y0 ), ImVec2( bb.Max.x, y1 ), c_top, c_top, c_bot,
+                                                        c_bot );
+            display_draw_list->PopClipRect( );
+        } else if ( tab_hovered_vis && !tab_contents_visible ) {
+            display_draw_list->AddRectFilledMultiColor( ImVec2( bb.Min.x, y0 ), ImVec2( bb.Max.x, y1 ), c_top, c_top, c_bot,
+                                                        c_bot );
+        }
+    }
+
+    RenderNavHighlight( bb, id );
 
     // Select with right mouse button. This is so the common idiom for context menu automatically highlight the current widget.
     const bool hovered_unblocked = IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByPopup);

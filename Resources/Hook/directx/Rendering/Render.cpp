@@ -83,9 +83,10 @@ namespace Render {
 
 				ubiVector2 s1{}, s2{};
 				if ( W2S( ubiVector3( p1.x, p1.y, p1.z ), s1 ) && W2S( ubiVector3( p2.x, p2.y, p2.z ), s2 ) ) {
-					const ImU32 skeletonColor = visuals::SkeletonVisCheck
-						? ( segmentVisible ? IM_COL32( 0, 255, 0, 255 ) : IM_COL32( 255, 0, 0, 255 ) )
-						: ImGui::ColorConvertFloat4ToU32( visuals::SkeletonColor );
+				const ImU32 skeletonColor = visuals::SkeletonVisCheck
+					? ( segmentVisible ? ImGui::ColorConvertFloat4ToU32( visuals::SkeletonVisVisibleColor )
+					                   : ImGui::ColorConvertFloat4ToU32( visuals::SkeletonVisInvisColor ) )
+					: ImGui::ColorConvertFloat4ToU32( visuals::SkeletonColor );
 					bg->AddLine(
 						ImVec2( s1.x, s1.y ),
 						ImVec2( s2.x, s2.y ),

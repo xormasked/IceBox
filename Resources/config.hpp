@@ -53,6 +53,8 @@ namespace visuals {
 
     inline bool Skeleton = true;
     inline ImVec4 SkeletonColor = { 1.f, 1.f, 1.f, 1.f };
+    inline ImVec4 SkeletonVisVisibleColor = { 0.f, 1.f, 0.f, 1.f };
+    inline ImVec4 SkeletonVisInvisColor = { 1.f, 0.f, 0.f, 1.f };
     inline float SkeletonThickness = 1.5f;
     inline bool SkeletonVisCheck = false;
 

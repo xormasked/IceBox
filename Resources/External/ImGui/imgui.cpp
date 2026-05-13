@@ -7933,6 +7933,12 @@ void ImGui::SetNextItemWidth(float item_width)
     g.NextItemData.Width = item_width;
 }
 
+void ImGui::SetNextComboDropdownLayoutHeight(float height)
+{
+    ImGuiContext& g = *GImGui;
+    g.BeginComboLayoutPushHeight = height > 0.f ? height : 0.f;
+}
+
 // FIXME: Remove the == 0.0f behavior?
 void ImGui::PushItemWidth(float item_width)
 {

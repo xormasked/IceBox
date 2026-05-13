@@ -1691,6 +1691,8 @@ struct ImGuiContext
     ImU32                   ColorEditLastColor;                 // RGB value with alpha set to 0.
     ImVec4                  ColorPickerRef;                     // Initial/reference color at the time of opening the color picker.
     ImGuiComboPreviewData   ComboPreviewData;
+    float                   BeginComboLayoutPushHeight;         // Set via SetNextComboDropdownLayoutHeight; consumed next BeginCombo; 0 = use height heuristic
+
     float                   SliderCurrentAccum;                 // Accumulated slider delta when using navigation controls.
     bool                    SliderCurrentAccumDirty;            // Has the accumulated slider delta changed since last time we tried to apply it?
     bool                    DragCurrentAccumDirty;
@@ -1869,6 +1871,7 @@ struct ImGuiContext
         ScrollbarClickDeltaToGrabCenter = 0.0f;
         TooltipOverrideCount = 0;
         TooltipSlowDelay = 0.50f;
+        BeginComboLayoutPushHeight = 0.0f;
 
         PlatformImePos = PlatformImeLastPos = ImVec2(FLT_MAX, FLT_MAX);
         PlatformLocaleDecimalPoint = '.';
