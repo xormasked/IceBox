@@ -178,6 +178,11 @@ namespace {
 
 	static constexpr size_t g_n_channels = sizeof( g_channels ) / sizeof( g_channels[ 0 ] );
 
+	// Better Light: while active with WM on, freeze user world-mod values (game overwrites ignored).
+	static LightingRgbPack s_better_light_saved_rgb{};
+	static bool s_better_light_saved_edit[ sizeof( g_channels ) / sizeof( g_channels[ 0 ] ) ]{};
+	static bool s_better_light_lock = false;
+
 	void read_pack( LightingRgbPack& p ) noexcept
 	{
 		for ( size_t i = 0; i < g_n_channels; ++i )
@@ -221,6 +226,27 @@ namespace {
 			const Channel& ch = g_channels[ i ];
 			ch.wm_rgb = p.*( ch.pk );
 		}
+	}
+
+	void better_light_capture_user_snapshot( ) noexcept
+	{
+		wm_to_pack( s_better_light_saved_rgb );
+		for ( size_t i = 0; i < g_n_channels; ++i )
+			s_better_light_saved_edit[ i ] = g_channels[ i ].edit;
+		s_better_light_lock = true;
+	}
+
+	void better_light_push_live_ui_to_memory( ) noexcept
+	{
+		for ( size_t i = 0; i < g_n_channels; ++i ) {
+			if ( !g_channels[ i ].edit )
+				continue;
+			Channel& ch = g_channels[ i ];
+			s_our_last.*( ch.pk ) = ch.wm_rgb;
+			write_rgb( ch.wm_rgb, ch.r, ch.g, ch.b );
+		}
+		for ( size_t i = 0; i < g_n_channels; ++i )
+			g_channels[ i ].prev_edit = g_channels[ i ].edit;
 	}
 
 	void maybe_push_rgb( bool channel_enabled,
@@ -368,6 +394,7 @@ auto IceBox::world_modulation_apply( ) -> void
 	const bool on = world_modulation::enabled;
 
 	if ( s_was_enabled && !on ) {
+		s_better_light_lock = false;
 		wm_to_pack( s_resume_after_disable );
 		s_have_resume_after_disable = true;
 		s_cheat_stash.clear_all( );
@@ -377,6 +404,7 @@ auto IceBox::world_modulation_apply( ) -> void
 	}
 
 	if ( !on ) {
+		s_better_light_lock = false;
 		s_was_enabled = false;
 		return;
 	}
@@ -397,6 +425,32 @@ auto IceBox::world_modulation_apply( ) -> void
 		for ( size_t i = 0; i < g_n_channels; ++i )
 			g_channels[ i ].prev_edit = g_channels[ i ].edit;
 		s_was_enabled = true;
+		if ( visuals::BetterLight ) {
+			better_light_capture_user_snapshot( );
+			better_light_push_live_ui_to_memory( );
+		}
+		return;
+	}
+
+	const bool better_light = visuals::BetterLight;
+
+	if ( better_light && !s_better_light_lock )
+		better_light_capture_user_snapshot( );
+
+	if ( !better_light && s_better_light_lock ) {
+		pack_to_wm( s_better_light_saved_rgb );
+		for ( size_t i = 0; i < g_n_channels; ++i )
+			g_channels[ i ].edit = s_better_light_saved_edit[ i ];
+		wm_to_pack( s_our_last );
+		write_pack_enabled_channels_only( s_our_last );
+		s_better_light_lock = false;
+		for ( size_t i = 0; i < g_n_channels; ++i )
+			g_channels[ i ].prev_edit = g_channels[ i ].edit;
+		return;
+	}
+
+	if ( s_better_light_lock && better_light ) {
+		better_light_push_live_ui_to_memory( );
 		return;
 	}
 

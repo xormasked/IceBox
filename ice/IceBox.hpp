@@ -38,6 +38,11 @@ namespace IceBox {
 	void aspect_ratio_uninstall( );
 	bool aspect_ratio_installed( );
 
+	bool better_light_install( );
+	void better_light_uninstall( );
+	bool better_light_installed( );
+	void better_light_prepare_uninject( ) noexcept;
+
 	bool run_and_shoot_install( );
 	void run_and_shoot_uninstall( );
 	bool run_and_shoot_installed( );
@@ -77,5 +82,9 @@ namespace IceBox {
 	void chat_spammer_tick( );
 
 	void render_raycast_debug_overlay( float delta_seconds, ImDrawList* draw_list );
+
+	void enemy_outlines_tick( );
+
+	void enemy_outlines_prepare_uninject( ) noexcept;
 
 }

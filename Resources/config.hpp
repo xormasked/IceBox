@@ -44,6 +44,8 @@ namespace visuals {
     inline bool AspectRatioHook = false;
     inline float AspectRatio = 1.5f;
 
+    inline bool BetterLight = false;
+
     inline bool Tracers = false;
     inline ImVec4 TracerColor = { 1.f, 1.f, 1.f, 1.f };
     inline const char* TracerPos[] = { "Bottom-Middle", "Center", "Top-Middle" };
@@ -53,6 +55,9 @@ namespace visuals {
     inline ImVec4 SkeletonColor = { 1.f, 1.f, 1.f, 1.f };
     inline float SkeletonThickness = 1.5f;
     inline bool SkeletonVisCheck = false;
+
+    inline bool EnemyOutline = false;
+    inline ImVec4 EnemyOutlineColor = { 1.f, 0.25f, 0.25f, 1.f };
 
     inline bool FovEnabled = false;
     inline float EyeFovDegrees = 90.f;

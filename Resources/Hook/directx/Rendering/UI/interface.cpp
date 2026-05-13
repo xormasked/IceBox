@@ -235,8 +235,12 @@ namespace Render {
                 ImGui::ColorEdit3( "##SkeletonColor", &visuals::SkeletonColor.x, kMenuColorRgb );
                 ImGui::SliderFloat( "Skeleton Thickness", &visuals::SkeletonThickness, 0.5f, 5.0f, "%.1f" );
                 ImGui::Checkbox( "Skeleton VisCheck", &visuals::SkeletonVisCheck );
+                ImGui::Checkbox( "Enemy outlines", &visuals::EnemyOutline );
+                ImGui::SameLine( );
+                ImGui::ColorEdit4( "##EnemyOutlineCol", &visuals::EnemyOutlineColor.x, kMenuColorRgba );
                 ImGui::Checkbox( "Aspect ratio (camera +0x128)", &visuals::AspectRatioHook );
                 ImGui::SliderFloat( "Aspect ratio", &visuals::AspectRatio, 0.1f, 2.0f, "%.2f" );
+                ImGui::Checkbox( "Better light", &visuals::BetterLight );
                 ImGui::Separator( );
                 ImGui::Checkbox( "Fov", &visuals::FovEnabled );
                 ImGui::BeginDisabled( !visuals::FovEnabled );

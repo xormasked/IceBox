@@ -68,6 +68,9 @@ namespace Scimitar {
     using SetGlobalMatrixFn = __int64( __fastcall* )( __int64 entity, __m128* matrix, char one );
     using ChatSendFn = void( __fastcall* )( uint64_t a1, char** strings );
 
+    using OutlineMeshFn = void ( __fastcall* )( __int64 self );
+    using OutlineApplyFn = void ( __fastcall* )( __int64 mgr, __int64 mesh_ctx, int mode, int* bgra );
+
     inline GetSkeletonComponentFn get_skeleton_component = nullptr;
     inline GetAnimationComponentFn get_animation_component_fn = nullptr;
     inline GetBoneFn get_bone_pos = nullptr;
@@ -77,6 +80,9 @@ namespace Scimitar {
     inline SetGlobalMatrixFn set_global_matrix_D871E0 = nullptr;
     inline ChatSendFn chat_team = nullptr;
     inline ChatSendFn chat_all = nullptr;
+
+    inline OutlineMeshFn outline_mesh = nullptr;
+    inline OutlineApplyFn outline_fn = nullptr;
 
     inline void add_dust( const ubiVector4& position, float radius, const ubiVector4& color )
     {
@@ -118,6 +124,7 @@ namespace Scimitar {
 
     class view_translation {
     public:
+
         static view_translation* get( )
         {
             uint64_t camera = Memory::Read<uint64_t>( Memory::ImageBase + 0x5E32C50 );
@@ -129,35 +136,58 @@ namespace Scimitar {
             return reinterpret_cast< view_translation* >( camera );
         }
 
+        static view_translation* get2( )
+        {
+            uint64_t camera = Memory::Read<uint64_t>( Memory::ImageBase + 0x5F23458 );
+            camera = Memory::Read<uint64_t>( camera + 0x848 );
+
+            return reinterpret_cast< view_translation* >( camera );
+        }
+
         ubiVector3 get_view_right( )
         {
-            return *reinterpret_cast< ubiVector3* >( this + 0x7A0 );
+            auto viewTrans2 = get2( );
+            if ( !viewTrans2 ) return ubiVector3{};
+            return *reinterpret_cast< ubiVector3* >( reinterpret_cast< uintptr_t >( viewTrans2 ) + 0x1B0 );
         }
 
         ubiVector3 get_view_up( )
         {
-            return *reinterpret_cast< ubiVector3* >( this + 0x7B0 );
+            auto viewTrans2 = get2( );
+            if ( !viewTrans2 ) return ubiVector3{};
+            return *reinterpret_cast< ubiVector3* >( reinterpret_cast< uintptr_t >( viewTrans2 ) + 0x1C0 );
         }
 
         ubiVector3 get_view_forward( )
         {
-            return *reinterpret_cast< ubiVector3* >( this + 0x7C0 );
+            auto viewTrans2 = get2( );
+            if ( !viewTrans2 ) return ubiVector3{};
+            return *reinterpret_cast< ubiVector3* >( reinterpret_cast< uintptr_t >( viewTrans2 ) + 0x1D0 );
         }
 
         float get_view_fovX( )
         {
-            return *reinterpret_cast< float* >( this + 0x7E0 );
+            auto viewTrans2 = get2( );
+            if ( !viewTrans2 ) return 0.0f;
+            float fov = *reinterpret_cast< float* >( reinterpret_cast< uintptr_t >( viewTrans2 ) + 0x370 );
+            return fov < 0.0f ? -fov : fov;
         }
 
         float get_view_fovY( )
         {
-            return *reinterpret_cast< float* >( this + 0x7F4 );
+            auto viewTrans2 = get2( );
+            if ( !viewTrans2 ) return 0.0f;
+            float fov = *reinterpret_cast< float* >( reinterpret_cast< uintptr_t >( viewTrans2 ) + 0x374 );
+            return fov < 0.0f ? -fov : fov;
         }
 
         ubiVector3 get_view_translation( )
         {
-            return *reinterpret_cast< ubiVector3* >( this + 0x7D0 );
+            auto viewTrans2 = get2( );
+            if ( !viewTrans2 ) return ubiVector3{};
+            return *reinterpret_cast< ubiVector3* >( reinterpret_cast< uintptr_t >( viewTrans2 ) + 0x1E0 );
         }
+
     };
 
     class round_state {
@@ -305,21 +335,6 @@ namespace Scimitar {
 
     class Entity {
     public:
-        BYTE GetAlliance( )
-        {
-            if ( !this ) return 6;
-
-            uint64_t teamInfo = *( uint64_t* ) ( this + 0xD0 );
-            teamInfo = Memory::Read<uint64_t>( teamInfo + 0x98 );
-            teamInfo = __ROL8__( teamInfo, 0x26 );
-            teamInfo += 0x60A7E4A6C2B31A41;
-            teamInfo = __ROL8__( teamInfo, 0x38 );
-            BYTE team = Memory::Read<BYTE>( teamInfo + 0x30 );
-
-            return team;
-        }
-
-
         ubiVector3 Origin( ) {
             return *reinterpret_cast< ubiVector3* >( this + 0x50 );
         }
@@ -370,6 +385,33 @@ namespace Scimitar {
             set_global_matrix_D871E0( reinterpret_cast< __int64 >( this ), matrix, one );
 
             std::memcpy( matrix, &origin, sizeof( ubiVector4 ) );
+        }
+
+        void apply_mesh_outline( bool enable, int colour_bgra ) noexcept
+        {
+            if ( !Memory::valid_pointer( this ) || !outline_mesh || !outline_fn )
+                return;
+
+            const uintptr_t self = reinterpret_cast< uintptr_t >( this );
+
+            const uintptr_t v68 = Memory::Read< uintptr_t >( self + 0x168 );
+            if ( !v68 || !Memory::valid_pointer( reinterpret_cast< const void* >( v68 ) ) )
+                return;
+            if ( Memory::Read< uint32_t >( self + 0x178 ) == 0xFFFFFFFFu )
+                return;
+
+            const uintptr_t v69 = Memory::Read< uintptr_t >( Memory::ImageBase + 0x5DE3718 );
+            if ( !v69 || !Memory::valid_pointer( reinterpret_cast< const void* >( v69 ) ) )
+                return;
+
+            const uint64_t v71 = Memory::Read< uint64_t >( self + 0xB0 );
+            const uint64_t new_b0 =
+                enable ? ( v71 | 0x200000000ULL ) : ( v71 & 0xFFFFFFFDFFFFFFFFULL );
+            Memory::Write< uint64_t >( self + 0xB0, new_b0 );
+
+            outline_mesh( static_cast< __int64 >( self ) );
+            int colour = colour_bgra;
+            outline_fn( static_cast< __int64 >( v69 ), static_cast< __int64 >( v68 ), 1, &colour );
         }
 
     };
@@ -440,6 +482,8 @@ namespace Scimitar {
         set_global_matrix_D871E0 = reinterpret_cast< SetGlobalMatrixFn >( Memory::ImageBase + 0xD871E0 );
         chat_all = reinterpret_cast< ChatSendFn >( Memory::ImageBase + 0x382B270 );
         chat_team = reinterpret_cast< ChatSendFn >( Memory::ImageBase + 0x382B360 );
+        outline_mesh = reinterpret_cast< OutlineMeshFn >( Memory::ImageBase + 0x86E3E0 );
+        outline_fn = reinterpret_cast< OutlineApplyFn >( Memory::ImageBase + 0x27013D0 );
     }
 }
 

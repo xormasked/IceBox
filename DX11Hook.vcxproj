@@ -178,14 +178,17 @@
     <ClCompile Include="Resources\External\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="ice\Features\camera_fx\camera_fx.cpp" />
     <ClCompile Include="ice\Features\world_modulation\world_modulation.cpp" />
+    <ClCompile Include="ice\Features\enemy_outlines\enemy_outlines.cpp" />
     <ClCompile Include="ice\Features\world_edit\world_edit.cpp" />
     <ClCompile Include="ice\Features\glow\glow.cpp" />
     <ClCompile Include="ice\Features\aspect_ratio\aspect_ratio.cpp" />
+    <ClCompile Include="ice\Features\better_light\better_light.cpp" />
     <ClCompile Include="ice\Features\run_and_shoot\run_and_shoot.cpp" />
     <ClCompile Include="Resources\Hook\directx\d3d11hook.cpp" />
     <ClCompile Include="Resources\Hook\directx\Rendering\Render.cpp" />
     <ClCompile Include="Resources\Hook\directx\Rendering\UI\interface.cpp" />
     <MASM Include="ice\Features\aspect_ratio\aspect_ratio_stub.asm" Condition="'$(Platform)'=='x64'" />
+    <MASM Include="ice\Features\better_light\better_light_stub.asm" Condition="'$(Platform)'=='x64'" />
     <MASM Include="ice\Features\run_and_shoot\run_and_shoot_stub.asm" Condition="'$(Platform)'=='x64'" />
     <MASM Include="ice\Features\unlock_all\unlock_all_stub.asm" Condition="'$(Platform)'=='x64'" />
     <MASM Include="ice\Features\no_spread\no_spread_stub.asm" Condition="'$(Platform)'=='x64'" />

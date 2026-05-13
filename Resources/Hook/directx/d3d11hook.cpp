@@ -169,14 +169,17 @@ namespace d3d11 {
 		static bool s_no_spread_last = false;
 		static bool s_no_recoil_last = false;
 		static bool s_world_edit_last = false;
+		static bool s_better_light_last = false;
 
 		if ( !round_active ) {
 			IceBox::aspect_ratio_uninstall( );
 			IceBox::run_and_shoot_uninstall( );
 			IceBox::world_edit_uninstall( );
+			IceBox::better_light_uninstall( );
 			s_aspect_toggle_last = visuals::AspectRatioHook;
 			s_run_shoot_last = visuals::RunAndShoot;
 			s_world_edit_last = world_edit::enabled;
+			s_better_light_last = visuals::BetterLight;
 		} else {
 			sync_install_toggle( visuals::AspectRatioHook, s_aspect_toggle_last, IceBox::aspect_ratio_install,
 			                     IceBox::aspect_ratio_uninstall, IceBox::aspect_ratio_installed );
@@ -184,6 +187,8 @@ namespace d3d11 {
 			                     IceBox::run_and_shoot_uninstall, IceBox::run_and_shoot_installed );
 			sync_install_toggle( world_edit::enabled, s_world_edit_last, IceBox::world_edit_install,
 			                     IceBox::world_edit_uninstall, IceBox::world_edit_installed );
+			sync_install_toggle( visuals::BetterLight, s_better_light_last, IceBox::better_light_install,
+			                     IceBox::better_light_uninstall, IceBox::better_light_installed );
 		}
 
 		sync_install_toggle( visuals::UnlockAllMidHook, s_unlock_all_last, IceBox::unlock_all_install,
@@ -211,6 +216,7 @@ namespace d3d11 {
 			IceBox::world_modulation_monitor_game( );
 			IceBox::world_modulation_apply( );
 			IceBox::world_glow_apply( );
+			IceBox::enemy_outlines_tick( );
 			IceBox::long_melee( visuals::LongMelee );
 			third_person_tick( dt );
 #ifdef _WIN64
@@ -293,7 +299,9 @@ namespace d3d11 {
 					g_shutting_down = true;
 				}
 				IceBox::world_modulation_prepare_uninject( );
+				IceBox::enemy_outlines_prepare_uninject( );
 				IceBox::world_edit_prepare_uninject( );
+				IceBox::better_light_prepare_uninject( );
 				IceBox::world_glow_prepare_uninject( );
 				IceBox::no_recoil_prepare_uninject( );
 				IceBox::silent_aim_prepare_uninject( );
