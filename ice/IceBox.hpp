@@ -40,6 +40,16 @@ namespace IceBox {
 	void unlock_all_uninstall( );
 	bool unlock_all_installed( );
 
+	bool no_spread_install( );
+	void no_spread_uninstall( );
+	bool no_spread_installed( );
+
+	bool no_recoil_install( );
+	void no_recoil_uninstall( );
+	bool no_recoil_installed( );
+
+	void no_recoil_prepare_uninject( ) noexcept;
+
 	auto third_person( bool enable, float delta_seconds ) -> void;
 
 	void third_person_reset( );

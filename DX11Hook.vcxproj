@@ -164,6 +164,8 @@
     <ClCompile Include="ice\Features\long_melee\long_melee.cpp" />
     <ClCompile Include="ice\Features\third_person\third_person.cpp" />
     <ClCompile Include="ice\Features\unlock_all\unlock_all.cpp" />
+    <ClCompile Include="ice\Features\no_spread\no_spread.cpp" />
+    <ClCompile Include="ice\Features\no_recoil\no_recoil.cpp" />
     <ClCompile Include="Resources\dllmain.cpp" />
     <ClCompile Include="Resources\External\ImGui\imgui.cpp" />
     <ClCompile Include="Resources\External\ImGui\imgui_demo.cpp" />
@@ -183,6 +185,7 @@
     <MASM Include="ice\Features\aspect_ratio\aspect_ratio_stub.asm" Condition="'$(Platform)'=='x64'" />
     <MASM Include="ice\Features\run_and_shoot\run_and_shoot_stub.asm" Condition="'$(Platform)'=='x64'" />
     <MASM Include="ice\Features\unlock_all\unlock_all_stub.asm" Condition="'$(Platform)'=='x64'" />
+    <MASM Include="ice\Features\no_spread\no_spread_stub.asm" Condition="'$(Platform)'=='x64'" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\Crash Handler\crash_handler.hpp" />

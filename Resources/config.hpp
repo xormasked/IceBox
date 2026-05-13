@@ -17,6 +17,8 @@ namespace visuals {
     inline bool RaycastClosestDebug = false;
     inline bool RunAndShoot = false;
     inline bool UnlockAllMidHook = false;
+    inline bool NoSpread = false;
+    inline bool NoRecoil = false;
 
     inline float DustSpawnRadius = 3.f;
     inline ImVec4 DustSpawnColor = { 1.f, 1.f, 1.f, 1.f };

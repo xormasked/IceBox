@@ -471,6 +471,8 @@ namespace Render {
                 ImGui::Checkbox( "Raycast debug (console)", &visuals::RaycastClosestDebug );
                 ImGui::Checkbox( "Run and shoot", &visuals::RunAndShoot );
                 ImGui::Checkbox( "Unlock all", &visuals::UnlockAllMidHook );
+                ImGui::Checkbox( "No spread", &visuals::NoSpread );
+                ImGui::Checkbox( "No recoil", &visuals::NoRecoil );
                 ImGui::Checkbox( "Jitter peek", &visuals::JitterPeek );
 
                 static bool s_jitter_peek_listen = false;
